@@ -1,7 +1,7 @@
-/**
+Ôªø/**
 @file		main.c
-@brief		code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumiËre du garage l'orsque la porte s'ouvre.
-lors de la fermeture de celle-ci, un compte ‡ rebour d'une durÈe de 2min s'enclanche ‡ la suite duquel le relai redevient inactif.
+@brief		code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumi√®re du garage l'orsque la porte s'ouvre.
+lors de la fermeture de celle-ci, un compte √† rebour d'une dur√©e de 2min s'enclanche √† la suite duquel le relai redevient inactif.
 Tant et aussi longtemps que la porte est ouverte le relai reste actif lui aussi.
 @author		Thomas Desrosiers
 @version	1.0
@@ -12,109 +12,83 @@ Tant et aussi longtemps que la porte est ouverte le relai reste actif lui aussi.
 @mainpage	microRelay
 @author		Thomas Desrosiers
 @section	MainSection1 Description
-code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumiËre du garage l'orsque quelqu'un ouvre la porte. lors de la fermeture de celle-ci, un compte ‡ rebpur d'une durÈe de 2min s'enclanche ‡ la suite duquel la lumiËre s'Èteindra. tant et aussi longtemps que la porte est ouverte la lumiËre le reste elle aussi.
+code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumi√®re du garage l'orsque quelqu'un ouvre la porte. lors de la fermeture de celle-ci, un compte √† rebpur d'une dur√©e de 2min s'enclanche √† la suite duquel la lumi√®re s'√©teindra. tant et aussi longtemps que la porte est ouverte la lumi√®re le reste elle aussi.
 */
 #define F_CPU 16000000UL
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-const uint8_t PLUS_MOINS = 4;//variable qui indique par bons de combien l'intensitÈe de la del augmente
-uint8_t porteToggle = 0;//variable qui indique si la porte ‡ ÈtÈ ouverte avant d'avoir ÈtÈ fermÈe.
+#define RELAY_INIT()		DDRB |= (1<<1) //initialise PB1 comme √©tant une sortie.
+#define RELAY_ON()			PORTB |= (1<<1) //active le relai.
+#define RELAY_OFF()			PORTB &= ~(1<<1) //d√©sactive le relai.
+#define SWITCH_DOOR_INIT()	PORTB |= (1<<3) //active la pullup pour l'interrupteur.
+#define SWITCH_DOOR()		(PINB & (1<<3))
+#define LED_INIT()			DDRC |= (1<<7) //initialise PC7 comme √©tant une sortie.
 
-volatile uint16_t toggleCnt = 0;//variable permettant au relai de rester actif sur une periode de temps x aprËs la fermeture de la porte.
-volatile uint8_t toggleFlag = 0;//varible qui vaut 1 lorsque le dÈlai est atteint.
-volatile uint8_t toggleCntMin = 0;//nombre de minutes
-volatile uint16_t ledCnt = 0;//variable permettant d'avoir un dÈlai entre chaque changement d'intensitÈ de la del.
-volatile uint8_t ledFlag = 0;//varible qui vaut 1 lorsque le dÈlai est atteint.
-
-#define RELAY_INIT()	DDRB |= (1<<1)//initialise PB1 comme Ètant une sortie.
-#define RELAY_ON()		PORTB |= (1<<1)//active le relai.
-#define RELAY_OFF()		PORTB &= ~(1<<1)//dÈsactive le relai.
-
-#define PULL_UP()		PORTB |= (1<<3)//active la pullup pour l'interrupteur.
-#define SWITCH_MAGNET()	(PINB & (1<<3))
-
-#define LED_INIT()		DDRC |= (1<<7)//initialise PC7 comme Ètant une sortie.
+const uint8_t PLUS_MOINS = 4; //variable qui indique par bons de combien l'intensit√©e de la DEL augmente
+uint8_t porteToggle = 0; //variable qui indique si la porte √† √©t√© ouverte avant d'avoir √©t√© ferm√©e.
+volatile uint16_t toggleCnt = 0; //variable permettant au relai de rester actif sur une periode de temps x apr√®s la fermeture de la porte.
+volatile uint8_t toggleFlag = 0; //varible qui vaut 1 lorsque le d√©lai est atteint.
+volatile uint8_t toggleCntMin = 0; //nombre de minutes
+volatile uint16_t ledCnt = 0; //variable permettant d'avoir un d√©lai entre chaque changement d'intensit√© de la DEL.
+volatile uint8_t ledFlag = 0; //varible qui vaut 1 lorsque le d√©lai est atteint.
 
 /**
- *@brief  Fonction qui initialise le mode veille.
+*@brief  Fonction d'initialisation des diff√©rents I/O et fonctions.
 */
-void sleepModeON();//prototype de fonction.
+void miscInit(void);
 
 /**
- *@brief Interruption qui gÈnËre les intervales de temps pour fade le del et compter le dÈlai avant que la relai ne soit plus actif.
+*@brief  Fonction qui initialise le mode veille.
 */
-ISR(TIMER0_COMPA_vect)
-{
-	toggleCnt++;
-	if (toggleCnt == 15000)//15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
-	{
-		toggleCnt = 0;//compteur est remis ‡ zÈro ‡ chaques minutes.
-		toggleCntMin++;
-		if (toggleCntMin == 15)//dÈlai est rÈglÈ ¿ 15min.
-		{
-			toggleCntMin = 0;//compteur remis ‡ zÈro ‡ chaque 5minutes.
-			toggleFlag = 1;
-		}
-	}
-	ledCnt++;
-	if (ledCnt == 5)//chaques 20ms la del augmente ou diminue d'intensitÈ en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
-	{
-		ledCnt = 0;
-		ledFlag = 1;
-	}
-}
+void sleepModeON(void); //prototype de fonction.
+
+/**
+*@brief  Fonction d'initialisation du timer #0.
+*/
+void timer0Init(void);
+
+/**
+*@brief  Fonction d'initialisation du timer #4.
+*/
+void timer4Init(void);
 
 int main(void)
 {
-	//macro
-	LED_INIT();
-	RELAY_INIT();
-	PULL_UP();
-	//timer 4 initialisation pour le pwm de la del.
-	TCCR4A |= (1<<COM4A1) | (1<<PWM4A);
-	TCCR4B |= (1<<CS40) | (1<<CS43);
-	OCR4C = 200;
-	OCR4A = 0;
-	//timer 0 initialisation pour le dÈlai du relai.
-	TCCR0A |= (1<<WGM01);
-	TCCR0B |= (1<<CS02);
-	TIMSK0 |= (1<<OCIE0A);
-	OCR0A = 249;
-	sei();
+	miscInit();
 	while (1)
 	{
-		if (ledFlag)//si le timer de del est = 1.
+		if (ledFlag) //Si le flag est vrai...
 		{
 			ledFlag = 0;
-			if (!SWITCH_MAGNET() && (OCR4A < 200))//lorsque la porte est ouverte et que la del n'est pas ‡ son intensitÈ maximale (200) son intensitÈ augmente.
+			if (!SWITCH_DOOR() && (OCR4A < 200)) //Lorsque la porte est ouverte et que la DEL n'est pas √† son intensit√© maximale (200) son intensit√© augmente.
 			{
-				OCR4A += PLUS_MOINS;//augmente l'intensitÈ de la del.
+				OCR4A += PLUS_MOINS; //Augmente l'intensit√© de la DEL.
 			}
-			if (SWITCH_MAGNET() && (OCR4A > 0))//lorsque la porte est fermÈe et que la del n'est pas ‡ son intensitÈ minimale (0) son intensitÈ diminue.
+			if (SWITCH_DOOR() && (OCR4A > 0)) //Lorsque la porte est ferm√©e et que la DEL n'est pas √† son intensit√© minimale (0) son intensit√© diminue.
 			{
-				OCR4A -= PLUS_MOINS;//diminue l'intensitÈ de la del.
+				OCR4A -= PLUS_MOINS; //Diminue l'intensit√© de la DEL.
 			}
 		}
-		if (!SWITCH_MAGNET())//si la porte est ouverte,
+		if (!SWITCH_DOOR()) //Si la porte est ouverte,
 		{
-			RELAY_ON();//le relai est activÈ.
-			porteToggle = 1;//permet de savoir si la porte ‡ dÈj‡ ÈtÈ ouverte depuis le dÈmarage afin de ne pas tomber inutilement en mode veille.
-			toggleCnt = 0;//remet le compteur ‡ 0.
-			toggleCntMin = 0;//remet le compteur des minutes ‡ 0 chaques fois que la porte est ouverte.
+			RELAY_ON(); //Le relai est activ√©.
+			porteToggle = 1; //Permet de savoir si la porte √† d√©j√† √©t√© ouverte depuis le d√©marage afin de ne pas tomber inutilement en mode veille.
+			toggleCnt = 0; //Remet le compteur √† 0.
+			toggleCntMin = 0; //Remet le compteur des minutes √† 0 chaques fois que la porte est ouverte.
 		}
 		
-		if (SWITCH_MAGNET())//si la porte est fermÈe,
+		if (SWITCH_DOOR()) //Si la porte est ferm√©e,
 		{
-			if (toggleFlag)//si le dÈlai est ÈcoulÈ,
+			if (toggleFlag) //Si le d√©lai est √©coul√©,
 			{
 				toggleFlag = 0;
-				RELAY_OFF();//le relai n'est pas activÈ.
-				if (porteToggle)//si la porte ‡ dÈj‡ ÈtÈ ouverte,
+				RELAY_OFF(); //Le relai n'est pas activ√©.
+				if (porteToggle) //Si la porte √† d√©j√† √©t√© ouverte,
 				{
-					porteToggle = 0;//l'Ètat de la porte est fermÈe
-					sleepModeON();//tombe en mode de veille.
+					porteToggle = 0; //√âtat de la porte == ferm√©e
+					sleepModeON(); //Mode veille.
 				}
 			}
 		}
@@ -122,16 +96,77 @@ int main(void)
 }
 
 /**
- *@brief  Fonction qui initialise le mode veille.
+*@brief Interruption qui g√©n√®re les intervales de temps pour fade le DEL et compter le d√©lai avant que la relai ne soit plus actif.
 */
-void sleepModeON()
+ISR(TIMER0_COMPA_vect)
 {
-	SMCR |= (1<<SM1) | (1<<SE);//SM1 (Sleep Mode #1) fait rÈfÈrence au mode Power-down. Le mode Power-Down est choisi et le bit Sleep Enable est mis ‡ 1.
-	PCICR |= 1;//active l'interruption PCINT0.
-	PCMSK0 |= (1<<PCINT3);//active l'interruption PCINT0 si PCINT3 change d'Ètat.
-	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC);//TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont dÈsactivÈs pour rÈduire la consomation pendant la veille.
-	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1);//USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont dÈsactivÈs pour rÈduire la consomation pendant la veille.
-	sei();//sei doit Ítre prÈsent affin de pouvoir se sortir du monde veille en utilisant une interruption.
-	sleep_cpu();//passage en mode veille.
-	SMCR &= ~(1<<SE);//au rÈveil le bit SE doit Ítre remis ‡ 0.
+	toggleCnt++;
+	if (toggleCnt == 15000) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
+	{
+		toggleCnt = 0; //compteur est remis √† z√©ro √† chaques minutes.
+		toggleCntMin++;
+		if (toggleCntMin == 15) //d√©lai est r√©gl√© √Ä 15min.
+		{
+			toggleCntMin = 0; //compteur remis √† z√©ro √† chaque 5minutes.
+			toggleFlag = 1;
+		}
+	}
+	ledCnt++;
+	if (ledCnt == 5) //chaques 20ms la DEL augmente ou diminue d'intensit√© en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
+	{
+		ledCnt = 0;
+		ledFlag = 1;
+	}
+}
+
+void miscInit(void)
+{
+	//Initialisation des E/S
+	LED_INIT();
+	RELAY_INIT();
+	SWITCH_DOOR_INIT();
+	
+	//Initialisation des Timers.
+	timer0Init();
+	timer4Init();
+}
+
+void timer0Init(void)
+{
+	//TCCR0A : COM0A1 COM0A0 COM0B1 COM0B0 ‚Äì ‚Äì WGM01 WGM00
+	//TCCR0B : FOC0A FOC0B ‚Äì ‚Äì WGM02 CS02 CS01 CS00
+	//TIMSK0 : ‚Äì ‚Äì ‚Äì ‚Äì ‚Äì OCIE0B OCIE0A TOIE0
+	TCCR0A |= (1<<WGM01);
+	TCCR0B |= (1<<CS02);
+	TIMSK0 |= (1<<OCIE0A);
+	OCR0A = 249;
+	sei();
+}
+
+void timer4Init(void)
+{
+	//TCCR4A: COM4A1 COM4A0 COM4B1 COM4B0 FOC4A FOC4B PWM4A PWM4B
+	//TCCR4B: PWM4X PSR4 DTPS41 DTPS40 CS43 CS42 CS41 CS40
+	//TCCR4C: COM4A1S COM4A0S COM4B1S COMAB0S COM4D1 COM4D0 FOC4D PWM4D
+	//TCCR4D: FPIE4 FPEN4 FPNC4 FPES4 FPAC4 FPF4 WGM41 WGM40
+	//TCCR4E: TLOCK4 ENHC4 OC4OE5 OC4OE4 OC4OE3 OC4OE2 OC4OE1 OC4OE0
+	TCCR4A |= (1<<COM4A1) | (1<<PWM4A);
+	TCCR4B |= (1<<CS40) | (1<<CS43);
+	OCR4C = 200;
+	OCR4A = 0;
+}
+
+void sleepModeON(void)
+{
+	//SMCR: ‚Äì ‚Äì ‚Äì ‚Äì SM2 SM1 SM0 SE
+	//PRR0: PRTWI ‚Äì PRTIM0 ‚Äì PRTIM1 PRSPI ‚Äì PRADC
+	//PRR1: PRUSB ‚Äì ‚Äì PRTIM4 PRTIM3 ‚Äì ‚Äì PRUSART1
+	SMCR |= (1<<SM1) | (1<<SE); //SM1 (Sleep Mode #1) fait r√©f√©rence au mode Power-down. Le mode Power-Down est choisi et le bit Sleep Enable est mis √† 1.
+	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC); //TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont d√©sactiv√©s pour r√©duire la consomation pendant la veille.
+	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1); //USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont d√©sactiv√©s pour r√©duire la consomation pendant la veille.
+	PCICR |= 1; //Active l'interruption externe de type "Pin Change Interrupt". Tout changement sur une des broches PCINT0 √† PCINT7 provoquera une interruption.
+	PCMSK0 |= (1<<PCINT3); //Active l'interruption PCINT0 si PCINT3 change d'√©tat.
+	sei(); //sei doit √™tre pr√©sent afin de pouvoir se sortir du monde veille en utilisant une interruption.
+	sleep_cpu(); //Passage en mode veille.
+	SMCR &= ~(1<<SE); //Au r√©veil le bit SE doit √™tre remis √† 0.
 }
