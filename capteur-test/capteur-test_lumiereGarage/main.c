@@ -24,7 +24,7 @@ code qui permet d'utiliser un module relais et un interrupteur de porte de type 
 #define DEL_PORTE_INIT()	(DDRC |= (1<<7))
 #define DEL_CAPTEUR_INIT()	(DDRB |= (1<<2))
 #define DEL_CAPTEUR_SET(a)	(PORTB = (PORTB & ~(1<<2)) | ((a && 1) << 2)) //Définition de l'état de la broche de sortie en fonction de la valeur reçue (0 = bas | 1 = haut).
-#define CAPTEUR_INIT()		(PORTB |= (1<<0))
+#define CAPTEUR_INIT()		(PORTB &= ~(1<<0))
 #define CAPTEUR()			(PINB & (1<<0))
 #define _TIMER_SEC_CYCLE_CNT	7500/*15000*/ //15'000 * 4ms = 60sec.
 #define _TIMER_MIN_CYCLE_CNT	1 //Nombre de minutes comptées en interruption.
@@ -77,6 +77,7 @@ int main(void)
 		{
 			DEL_CAPTEUR_SET(1); //Le relai est activé.
 			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
+			toggleFlag = 0;
 			toggleCntSec = 0; //Remet le compteur à 0.
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
 		}
@@ -127,13 +128,17 @@ ISR(TIMER0_COMPA_vect)
 void miscInit(void)
 {
 	//Initialisation des E/S
+	//CAPTEUR_INIT();
 	DEL_CAPTEUR_INIT();
 	DEL_PORTE_INIT();
+	
+	//Initialisation de variables.
+	toggleFlag = 1;
 	
 	//Initialisation des Timers.
 	timer0Init();
 	timer4Init();
-	usartInit(1000000, F_CPU);
+	//usartInit(1000000, F_CPU);
 }
 
 void timer0Init(void)

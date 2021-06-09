@@ -3,33 +3,33 @@ lumiereGarage.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  00000306  2**0
+  0 .data         00000000  00800100  00800100  000002fe  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         00000292  00000000  00000000  00000074  2**1
+  1 .text         0000028a  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000008  00800100  00800100  00000306  2**0
+  2 .bss          00000008  00800100  00800100  000002fe  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  00000306  2**0
+  3 .comment      00000030  00000000  00000000  000002fe  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000338  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000330  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000048  00000000  00000000  00000378  2**0
+  5 .debug_aranges 00000048  00000000  00000000  00000370  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000bb4  00000000  00000000  000003c0  2**0
+  6 .debug_info   00000bb4  00000000  00000000  000003b8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000a39  00000000  00000000  00000f74  2**0
+  7 .debug_abbrev 00000a39  00000000  00000000  00000f6c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   000005c0  00000000  00000000  000019ad  2**0
+  8 .debug_line   000005ba  00000000  00000000  000019a5  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000090  00000000  00000000  00001f70  2**2
+  9 .debug_frame  00000090  00000000  00000000  00001f60  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    0000879e  00000000  00000000  00002000  2**0
+ 10 .debug_str    000087a4  00000000  00000000  00001ff0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000056  00000000  00000000  0000a79e  2**0
+ 11 .debug_loc    00000056  00000000  00000000  0000a794  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000038  00000000  00000000  0000a7f4  2**0
+ 12 .debug_ranges 00000038  00000000  00000000  0000a7ea  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  0000349f  00000000  00000000  0000a82c  2**0
+ 13 .debug_macro  0000349f  00000000  00000000  0000a822  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -134,7 +134,7 @@ Disassembly of section .text:
   b8:	11 e0       	ldi	r17, 0x01	; 1
   ba:	a0 e0       	ldi	r26, 0x00	; 0
   bc:	b1 e0       	ldi	r27, 0x01	; 1
-  be:	e2 e9       	ldi	r30, 0x92	; 146
+  be:	ea e8       	ldi	r30, 0x8A	; 138
   c0:	f2 e0       	ldi	r31, 0x02	; 2
   c2:	02 c0       	rjmp	.+4      	; 0xc8 <__do_copy_data+0x10>
   c4:	05 90       	lpm	r0, Z+
@@ -156,8 +156,8 @@ Disassembly of section .text:
   d8:	a8 30       	cpi	r26, 0x08	; 8
   da:	b2 07       	cpc	r27, r18
   dc:	e1 f7       	brne	.-8      	; 0xd6 <.do_clear_bss_loop>
-  de:	99 d0       	rcall	.+306    	; 0x212 <main>
-  e0:	d6 c0       	rjmp	.+428    	; 0x28e <_exit>
+  de:	95 d0       	rcall	.+298    	; 0x20a <main>
+  e0:	d2 c0       	rjmp	.+420    	; 0x286 <_exit>
 
 000000e2 <__bad_interrupt>:
   e2:	8e cf       	rjmp	.-228    	; 0x0 <__vectors>
@@ -177,303 +177,300 @@ ISR(TIMER0_COMPA_vect)
   ee:	2f 93       	push	r18
   f0:	8f 93       	push	r24
   f2:	9f 93       	push	r25
-	if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
-  f4:	80 91 07 01 	lds	r24, 0x0107	; 0x800107 <porteToggle>
-  f8:	88 23       	and	r24, r24
-  fa:	49 f0       	breq	.+18     	; 0x10e <__vector_21+0x2a>
+	//if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
 	toggleCntSec++;
-  fc:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
- 100:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
- 104:	01 96       	adiw	r24, 0x01	; 1
- 106:	90 93 06 01 	sts	0x0106, r25	; 0x800106 <toggleCntSec+0x1>
- 10a:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <toggleCntSec>
+  f4:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
+  f8:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
+  fc:	01 96       	adiw	r24, 0x01	; 1
+  fe:	90 93 06 01 	sts	0x0106, r25	; 0x800106 <toggleCntSec+0x1>
+ 102:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <toggleCntSec>
 	if (toggleCntSec >= _TIMER_SEC_CYCLE_CNT) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
- 10e:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
- 112:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
- 116:	8c 34       	cpi	r24, 0x4C	; 76
- 118:	9d 41       	sbci	r25, 0x1D	; 29
- 11a:	d8 f0       	brcs	.+54     	; 0x152 <__vector_21+0x6e>
+ 106:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
+ 10a:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
+ 10e:	8c 34       	cpi	r24, 0x4C	; 76
+ 110:	9d 41       	sbci	r25, 0x1D	; 29
+ 112:	d8 f0       	brcs	.+54     	; 0x14a <__vector_21+0x66>
 	{
 		toggleCntSec -= _TIMER_SEC_CYCLE_CNT; //Compteur est remis à zéro à chaques minutes.
- 11c:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
- 120:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
- 124:	8c 54       	subi	r24, 0x4C	; 76
- 126:	9d 41       	sbci	r25, 0x1D	; 29
- 128:	90 93 06 01 	sts	0x0106, r25	; 0x800106 <toggleCntSec+0x1>
- 12c:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <toggleCntSec>
+ 114:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
+ 118:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
+ 11c:	8c 54       	subi	r24, 0x4C	; 76
+ 11e:	9d 41       	sbci	r25, 0x1D	; 29
+ 120:	90 93 06 01 	sts	0x0106, r25	; 0x800106 <toggleCntSec+0x1>
+ 124:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <toggleCntSec>
 		toggleCntMin++;
- 130:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
- 134:	8f 5f       	subi	r24, 0xFF	; 255
- 136:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
+ 128:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
+ 12c:	8f 5f       	subi	r24, 0xFF	; 255
+ 12e:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
 		if (toggleCntMin >= _TIMER_MIN_CYCLE_CNT) //Délai est réglé À 15min.
- 13a:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
- 13e:	88 23       	and	r24, r24
- 140:	41 f0       	breq	.+16     	; 0x152 <__vector_21+0x6e>
+ 132:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
+ 136:	88 23       	and	r24, r24
+ 138:	41 f0       	breq	.+16     	; 0x14a <__vector_21+0x66>
 		{
 			toggleCntMin -= _TIMER_MIN_CYCLE_CNT; //Compteur remis à zéro à chaque 5minutes.
- 142:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
- 146:	81 50       	subi	r24, 0x01	; 1
- 148:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
+ 13a:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
+ 13e:	81 50       	subi	r24, 0x01	; 1
+ 140:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
 			toggleFlag = 1;
- 14c:	81 e0       	ldi	r24, 0x01	; 1
- 14e:	80 93 04 01 	sts	0x0104, r24	; 0x800104 <toggleFlag>
+ 144:	81 e0       	ldi	r24, 0x01	; 1
+ 146:	80 93 04 01 	sts	0x0104, r24	; 0x800104 <toggleFlag>
 		}
 	}
 	
 	ledCnt++;
- 152:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <ledCnt>
- 156:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <ledCnt+0x1>
- 15a:	01 96       	adiw	r24, 0x01	; 1
- 15c:	90 93 02 01 	sts	0x0102, r25	; 0x800102 <ledCnt+0x1>
- 160:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <ledCnt>
+ 14a:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <ledCnt>
+ 14e:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <ledCnt+0x1>
+ 152:	01 96       	adiw	r24, 0x01	; 1
+ 154:	90 93 02 01 	sts	0x0102, r25	; 0x800102 <ledCnt+0x1>
+ 158:	80 93 01 01 	sts	0x0101, r24	; 0x800101 <ledCnt>
 	if (ledCnt == 5) //Chaques 20ms la DEL augmente ou diminue d'intensité en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
- 164:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <ledCnt>
- 168:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <ledCnt+0x1>
- 16c:	05 97       	sbiw	r24, 0x05	; 5
- 16e:	39 f4       	brne	.+14     	; 0x17e <__vector_21+0x9a>
+ 15c:	80 91 01 01 	lds	r24, 0x0101	; 0x800101 <ledCnt>
+ 160:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <ledCnt+0x1>
+ 164:	05 97       	sbiw	r24, 0x05	; 5
+ 166:	39 f4       	brne	.+14     	; 0x176 <__vector_21+0x92>
 	{
 		ledCnt = 0;
- 170:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <ledCnt+0x1>
- 174:	10 92 01 01 	sts	0x0101, r1	; 0x800101 <ledCnt>
+ 168:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <ledCnt+0x1>
+ 16c:	10 92 01 01 	sts	0x0101, r1	; 0x800101 <ledCnt>
 		ledFlag = 1;
- 178:	81 e0       	ldi	r24, 0x01	; 1
- 17a:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
+ 170:	81 e0       	ldi	r24, 0x01	; 1
+ 172:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_end>
 	}
 }
- 17e:	9f 91       	pop	r25
- 180:	8f 91       	pop	r24
- 182:	2f 91       	pop	r18
- 184:	0f 90       	pop	r0
- 186:	0f be       	out	0x3f, r0	; 63
- 188:	0f 90       	pop	r0
- 18a:	1f 90       	pop	r1
- 18c:	18 95       	reti
+ 176:	9f 91       	pop	r25
+ 178:	8f 91       	pop	r24
+ 17a:	2f 91       	pop	r18
+ 17c:	0f 90       	pop	r0
+ 17e:	0f be       	out	0x3f, r0	; 63
+ 180:	0f 90       	pop	r0
+ 182:	1f 90       	pop	r1
+ 184:	18 95       	reti
 
-0000018e <timer0Init>:
+00000186 <timer0Init>:
 {
 	//TCCR0A : COM0A1 COM0A0 COM0B1 COM0B0 – – WGM01 WGM00
 	//TCCR0B : FOC0A FOC0B – – WGM02 CS02 CS01 CS00
 	//TIMSK0 : – – – – – OCIE0B OCIE0A TOIE0
 	
 	TCCR0A |= (1<<WGM01);
- 18e:	84 b5       	in	r24, 0x24	; 36
- 190:	82 60       	ori	r24, 0x02	; 2
- 192:	84 bd       	out	0x24, r24	; 36
+ 186:	84 b5       	in	r24, 0x24	; 36
+ 188:	82 60       	ori	r24, 0x02	; 2
+ 18a:	84 bd       	out	0x24, r24	; 36
 	TCCR0B |= (1<<CS02);
- 194:	85 b5       	in	r24, 0x25	; 37
- 196:	84 60       	ori	r24, 0x04	; 4
- 198:	85 bd       	out	0x25, r24	; 37
+ 18c:	85 b5       	in	r24, 0x25	; 37
+ 18e:	84 60       	ori	r24, 0x04	; 4
+ 190:	85 bd       	out	0x25, r24	; 37
 	TIMSK0 |= (1<<OCIE0A);
- 19a:	ee e6       	ldi	r30, 0x6E	; 110
- 19c:	f0 e0       	ldi	r31, 0x00	; 0
- 19e:	80 81       	ld	r24, Z
- 1a0:	82 60       	ori	r24, 0x02	; 2
- 1a2:	80 83       	st	Z, r24
+ 192:	ee e6       	ldi	r30, 0x6E	; 110
+ 194:	f0 e0       	ldi	r31, 0x00	; 0
+ 196:	80 81       	ld	r24, Z
+ 198:	82 60       	ori	r24, 0x02	; 2
+ 19a:	80 83       	st	Z, r24
 	OCR0A = 250-1;
- 1a4:	89 ef       	ldi	r24, 0xF9	; 249
- 1a6:	87 bd       	out	0x27, r24	; 39
+ 19c:	89 ef       	ldi	r24, 0xF9	; 249
+ 19e:	87 bd       	out	0x27, r24	; 39
 	sei();
- 1a8:	78 94       	sei
- 1aa:	08 95       	ret
+ 1a0:	78 94       	sei
+ 1a2:	08 95       	ret
 
-000001ac <timer4Init>:
+000001a4 <timer4Init>:
 	//TCCR4B: PWM4X PSR4 DTPS41 DTPS40 CS43 CS42 CS41 CS40
 	//TCCR4C: COM4A1S COM4A0S COM4B1S COMAB0S COM4D1 COM4D0 FOC4D PWM4D
 	//TCCR4D: FPIE4 FPEN4 FPNC4 FPES4 FPAC4 FPF4 WGM41 WGM40
 	//TCCR4E: TLOCK4 ENHC4 OC4OE5 OC4OE4 OC4OE3 OC4OE2 OC4OE1 OC4OE0
 	
 	TCCR4A |= (1<<COM4A1) | (1<<PWM4A);
- 1ac:	e0 ec       	ldi	r30, 0xC0	; 192
- 1ae:	f0 e0       	ldi	r31, 0x00	; 0
- 1b0:	80 81       	ld	r24, Z
- 1b2:	82 68       	ori	r24, 0x82	; 130
- 1b4:	80 83       	st	Z, r24
+ 1a4:	e0 ec       	ldi	r30, 0xC0	; 192
+ 1a6:	f0 e0       	ldi	r31, 0x00	; 0
+ 1a8:	80 81       	ld	r24, Z
+ 1aa:	82 68       	ori	r24, 0x82	; 130
+ 1ac:	80 83       	st	Z, r24
 	TCCR4B |= (1<<CS40) | (1<<CS43);
- 1b6:	e1 ec       	ldi	r30, 0xC1	; 193
- 1b8:	f0 e0       	ldi	r31, 0x00	; 0
- 1ba:	80 81       	ld	r24, Z
- 1bc:	89 60       	ori	r24, 0x09	; 9
- 1be:	80 83       	st	Z, r24
+ 1ae:	e1 ec       	ldi	r30, 0xC1	; 193
+ 1b0:	f0 e0       	ldi	r31, 0x00	; 0
+ 1b2:	80 81       	ld	r24, Z
+ 1b4:	89 60       	ori	r24, 0x09	; 9
+ 1b6:	80 83       	st	Z, r24
 	OCR4C = 200-1;
- 1c0:	87 ec       	ldi	r24, 0xC7	; 199
- 1c2:	80 93 d1 00 	sts	0x00D1, r24	; 0x8000d1 <__DATA_REGION_ORIGIN__+0x71>
+ 1b8:	87 ec       	ldi	r24, 0xC7	; 199
+ 1ba:	80 93 d1 00 	sts	0x00D1, r24	; 0x8000d1 <__DATA_REGION_ORIGIN__+0x71>
 	OCR4A = 0;
- 1c6:	10 92 cf 00 	sts	0x00CF, r1	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
- 1ca:	08 95       	ret
+ 1be:	10 92 cf 00 	sts	0x00CF, r1	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
+ 1c2:	08 95       	ret
 
-000001cc <miscInit>:
+000001c4 <miscInit>:
 }
 
 void miscInit(void)
 {
 	//Initialisation des E/S
 	DEL_INIT();
- 1cc:	3f 9a       	sbi	0x07, 7	; 7
+ 1c4:	3f 9a       	sbi	0x07, 7	; 7
 	RELAY_INIT();
- 1ce:	21 9a       	sbi	0x04, 1	; 4
+ 1c6:	21 9a       	sbi	0x04, 1	; 4
 	CAPTEUR_PORTE_INIT();
- 1d0:	2b 9a       	sbi	0x05, 3	; 5
+ 1c8:	2b 9a       	sbi	0x05, 3	; 5
 	
 	//Initialisation des Timers.
 	timer0Init();
- 1d2:	dd df       	rcall	.-70     	; 0x18e <timer0Init>
+ 1ca:	dd df       	rcall	.-70     	; 0x186 <timer0Init>
 	timer4Init();
- 1d4:	eb cf       	rjmp	.-42     	; 0x1ac <timer4Init>
- 1d6:	08 95       	ret
+ 1cc:	eb cf       	rjmp	.-42     	; 0x1a4 <timer4Init>
+ 1ce:	08 95       	ret
 
-000001d8 <sleepModeON>:
- 1d8:	83 b7       	in	r24, 0x33	; 51
+000001d0 <sleepModeON>:
+ 1d0:	83 b7       	in	r24, 0x33	; 51
 {
 	//SMCR: – – – – SM2 SM1 SM0 SE
 	//PRR0: PRTWI – PRTIM0 – PRTIM1 PRSPI – PRADC
 	//PRR1: PRUSB – – PRTIM4 PRTIM3 – – PRUSART1
 	
 	SMCR |= (1<<SM1) | (1<<SE); //SM1 (Sleep Mode #1) fait référence au mode Power-down. Le mode Power-Down est choisi et le bit Sleep Enable est mis à 1.
- 1da:	85 60       	ori	r24, 0x05	; 5
- 1dc:	83 bf       	out	0x33, r24	; 51
+ 1d2:	85 60       	ori	r24, 0x05	; 5
+ 1d4:	83 bf       	out	0x33, r24	; 51
 	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC); //TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont désactivés pour réduire la consomation pendant la veille.
- 1de:	e4 e6       	ldi	r30, 0x64	; 100
- 1e0:	f0 e0       	ldi	r31, 0x00	; 0
- 1e2:	80 81       	ld	r24, Z
- 1e4:	8d 68       	ori	r24, 0x8D	; 141
- 1e6:	80 83       	st	Z, r24
+ 1d6:	e4 e6       	ldi	r30, 0x64	; 100
+ 1d8:	f0 e0       	ldi	r31, 0x00	; 0
+ 1da:	80 81       	ld	r24, Z
+ 1dc:	8d 68       	ori	r24, 0x8D	; 141
+ 1de:	80 83       	st	Z, r24
 	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1); //USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont désactivés pour réduire la consomation pendant la veille.
- 1e8:	e5 e6       	ldi	r30, 0x65	; 101
- 1ea:	f0 e0       	ldi	r31, 0x00	; 0
- 1ec:	80 81       	ld	r24, Z
- 1ee:	89 69       	ori	r24, 0x99	; 153
- 1f0:	80 83       	st	Z, r24
+ 1e0:	e5 e6       	ldi	r30, 0x65	; 101
+ 1e2:	f0 e0       	ldi	r31, 0x00	; 0
+ 1e4:	80 81       	ld	r24, Z
+ 1e6:	89 69       	ori	r24, 0x99	; 153
+ 1e8:	80 83       	st	Z, r24
 	PCICR |= 1; //Active l'interruption externe de type "Pin Change Interrupt". Tout changement sur une des broches PCINT0 à PCINT7 provoquera une interruption.
- 1f2:	e8 e6       	ldi	r30, 0x68	; 104
- 1f4:	f0 e0       	ldi	r31, 0x00	; 0
- 1f6:	80 81       	ld	r24, Z
- 1f8:	81 60       	ori	r24, 0x01	; 1
- 1fa:	80 83       	st	Z, r24
-	PCMSK0 |= (1<<PCINT3); //Active l'interruption PCINT0 si PCINT3 change d'état.
- 1fc:	eb e6       	ldi	r30, 0x6B	; 107
- 1fe:	f0 e0       	ldi	r31, 0x00	; 0
- 200:	80 81       	ld	r24, Z
- 202:	88 60       	ori	r24, 0x08	; 8
- 204:	80 83       	st	Z, r24
+ 1ea:	e8 e6       	ldi	r30, 0x68	; 104
+ 1ec:	f0 e0       	ldi	r31, 0x00	; 0
+ 1ee:	80 81       	ld	r24, Z
+ 1f0:	81 60       	ori	r24, 0x01	; 1
+ 1f2:	80 83       	st	Z, r24
+	PCMSK0 |= (1<<PCINT0) | (1<<PCINT3); //Active l'interruption PCINT0 (PB0) et PCINT3 (PB3) change d'état afin de sortir du mode veille.
+ 1f4:	eb e6       	ldi	r30, 0x6B	; 107
+ 1f6:	f0 e0       	ldi	r31, 0x00	; 0
+ 1f8:	80 81       	ld	r24, Z
+ 1fa:	89 60       	ori	r24, 0x09	; 9
+ 1fc:	80 83       	st	Z, r24
 	sei(); //sei doit être présent afin de pouvoir se sortir du monde veille en utilisant une interruption.
- 206:	78 94       	sei
+ 1fe:	78 94       	sei
 	sleep_cpu(); //Passage en mode veille.
- 208:	88 95       	sleep
+ 200:	88 95       	sleep
 	SMCR &= ~(1<<SE); //Au réveil le bit SE doit être remis à 0.
- 20a:	83 b7       	in	r24, 0x33	; 51
- 20c:	8e 7f       	andi	r24, 0xFE	; 254
- 20e:	83 bf       	out	0x33, r24	; 51
- 210:	08 95       	ret
+ 202:	83 b7       	in	r24, 0x33	; 51
+ 204:	8e 7f       	andi	r24, 0xFE	; 254
+ 206:	83 bf       	out	0x33, r24	; 51
+ 208:	08 95       	ret
 
-00000212 <main>:
+0000020a <main>:
 */
 void timer4Init(void);
 
 int main(void)
 {
 	miscInit();
- 212:	dc df       	rcall	.-72     	; 0x1cc <miscInit>
+ 20a:	dc df       	rcall	.-72     	; 0x1c4 <miscInit>
 			ledFlag = 0;
 			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
 			{
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
 			}
 			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
- 214:	cf ec       	ldi	r28, 0xCF	; 207
- 216:	d0 e0       	ldi	r29, 0x00	; 0
+ 20c:	cf ec       	ldi	r28, 0xCF	; 207
+ 20e:	d0 e0       	ldi	r29, 0x00	; 0
 			}
 		}
 		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
 		{
 			RELAY_SET(1); //Le relai est activé.
 			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
- 218:	11 e0       	ldi	r17, 0x01	; 1
+ 210:	11 e0       	ldi	r17, 0x01	; 1
 int main(void)
 {
 	miscInit();
 	while (1)
 	{
 		if (ledFlag) //Si le flag est vrai...
- 21a:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
- 21e:	88 23       	and	r24, r24
- 220:	b1 f0       	breq	.+44     	; 0x24e <main+0x3c>
+ 212:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
+ 216:	88 23       	and	r24, r24
+ 218:	b1 f0       	breq	.+44     	; 0x246 <main+0x3c>
 		{
 			ledFlag = 0;
- 222:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__data_end>
+ 21a:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__data_end>
 			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
- 226:	1b 9b       	sbis	0x03, 3	; 3
- 228:	02 c0       	rjmp	.+4      	; 0x22e <main+0x1c>
- 22a:	18 9b       	sbis	0x03, 0	; 3
- 22c:	06 c0       	rjmp	.+12     	; 0x23a <main+0x28>
- 22e:	88 81       	ld	r24, Y
- 230:	88 3c       	cpi	r24, 0xC8	; 200
- 232:	18 f4       	brcc	.+6      	; 0x23a <main+0x28>
+ 21e:	1b 9b       	sbis	0x03, 3	; 3
+ 220:	02 c0       	rjmp	.+4      	; 0x226 <main+0x1c>
+ 222:	18 9b       	sbis	0x03, 0	; 3
+ 224:	06 c0       	rjmp	.+12     	; 0x232 <main+0x28>
+ 226:	88 81       	ld	r24, Y
+ 228:	88 3c       	cpi	r24, 0xC8	; 200
+ 22a:	18 f4       	brcc	.+6      	; 0x232 <main+0x28>
 			{
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
- 234:	88 81       	ld	r24, Y
- 236:	8c 5f       	subi	r24, 0xFC	; 252
- 238:	88 83       	st	Y, r24
+ 22c:	88 81       	ld	r24, Y
+ 22e:	8c 5f       	subi	r24, 0xFC	; 252
+ 230:	88 83       	st	Y, r24
 			}
 			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
- 23a:	1b 9b       	sbis	0x03, 3	; 3
- 23c:	08 c0       	rjmp	.+16     	; 0x24e <main+0x3c>
- 23e:	18 99       	sbic	0x03, 0	; 3
- 240:	06 c0       	rjmp	.+12     	; 0x24e <main+0x3c>
- 242:	88 81       	ld	r24, Y
- 244:	88 23       	and	r24, r24
- 246:	19 f0       	breq	.+6      	; 0x24e <main+0x3c>
+ 232:	1b 9b       	sbis	0x03, 3	; 3
+ 234:	08 c0       	rjmp	.+16     	; 0x246 <main+0x3c>
+ 236:	18 99       	sbic	0x03, 0	; 3
+ 238:	06 c0       	rjmp	.+12     	; 0x246 <main+0x3c>
+ 23a:	88 81       	ld	r24, Y
+ 23c:	88 23       	and	r24, r24
+ 23e:	19 f0       	breq	.+6      	; 0x246 <main+0x3c>
 			{
 				OCR4A -= PLUS_MOINS; //Diminue l'intensité de la DEL.
- 248:	88 81       	ld	r24, Y
- 24a:	84 50       	subi	r24, 0x04	; 4
- 24c:	88 83       	st	Y, r24
+ 240:	88 81       	ld	r24, Y
+ 242:	84 50       	subi	r24, 0x04	; 4
+ 244:	88 83       	st	Y, r24
 			}
 		}
 		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
- 24e:	1b 9b       	sbis	0x03, 3	; 3
- 250:	02 c0       	rjmp	.+4      	; 0x256 <main+0x44>
- 252:	18 9b       	sbis	0x03, 0	; 3
- 254:	09 c0       	rjmp	.+18     	; 0x268 <main+0x56>
+ 246:	1b 9b       	sbis	0x03, 3	; 3
+ 248:	02 c0       	rjmp	.+4      	; 0x24e <main+0x44>
+ 24a:	18 9b       	sbis	0x03, 0	; 3
+ 24c:	09 c0       	rjmp	.+18     	; 0x260 <main+0x56>
 		{
 			RELAY_SET(1); //Le relai est activé.
- 256:	29 9a       	sbi	0x05, 1	; 5
+ 24e:	29 9a       	sbi	0x05, 1	; 5
 			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
- 258:	10 93 07 01 	sts	0x0107, r17	; 0x800107 <porteToggle>
+ 250:	10 93 07 01 	sts	0x0107, r17	; 0x800107 <porteToggle>
 			toggleCntSec = 0; //Remet le compteur à 0.
- 25c:	10 92 06 01 	sts	0x0106, r1	; 0x800106 <toggleCntSec+0x1>
- 260:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <toggleCntSec>
+ 254:	10 92 06 01 	sts	0x0106, r1	; 0x800106 <toggleCntSec+0x1>
+ 258:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <toggleCntSec>
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
- 264:	10 92 03 01 	sts	0x0103, r1	; 0x800103 <toggleCntMin>
+ 25c:	10 92 03 01 	sts	0x0103, r1	; 0x800103 <toggleCntMin>
 		}
 		
 		if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE())) //Si la porte est fermée et qu'aucun mouvement n'est détecté...
- 268:	1b 9b       	sbis	0x03, 3	; 3
- 26a:	d7 cf       	rjmp	.-82     	; 0x21a <main+0x8>
- 26c:	18 99       	sbic	0x03, 0	; 3
- 26e:	d5 cf       	rjmp	.-86     	; 0x21a <main+0x8>
+ 260:	1b 9b       	sbis	0x03, 3	; 3
+ 262:	d7 cf       	rjmp	.-82     	; 0x212 <main+0x8>
+ 264:	18 99       	sbic	0x03, 0	; 3
+ 266:	d5 cf       	rjmp	.-86     	; 0x212 <main+0x8>
 		{
 			if (toggleFlag) //Si le délai est écoulé...
- 270:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <toggleFlag>
- 274:	88 23       	and	r24, r24
- 276:	89 f2       	breq	.-94     	; 0x21a <main+0x8>
+ 268:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <toggleFlag>
+ 26c:	88 23       	and	r24, r24
+ 26e:	89 f2       	breq	.-94     	; 0x212 <main+0x8>
 			{
 				toggleFlag = 0;
- 278:	10 92 04 01 	sts	0x0104, r1	; 0x800104 <toggleFlag>
+ 270:	10 92 04 01 	sts	0x0104, r1	; 0x800104 <toggleFlag>
 				RELAY_SET(0); //Le relai n'est pas activé.
- 27c:	29 98       	cbi	0x05, 1	; 5
+ 274:	29 98       	cbi	0x05, 1	; 5
 				if (porteToggle) //Si la porte à déjà été ouverte,
- 27e:	80 91 07 01 	lds	r24, 0x0107	; 0x800107 <porteToggle>
- 282:	88 23       	and	r24, r24
- 284:	51 f2       	breq	.-108    	; 0x21a <main+0x8>
+ 276:	80 91 07 01 	lds	r24, 0x0107	; 0x800107 <porteToggle>
+ 27a:	88 23       	and	r24, r24
+ 27c:	51 f2       	breq	.-108    	; 0x212 <main+0x8>
 				{
 					porteToggle = 0; //État de la porte == fermée
- 286:	10 92 07 01 	sts	0x0107, r1	; 0x800107 <porteToggle>
+ 27e:	10 92 07 01 	sts	0x0107, r1	; 0x800107 <porteToggle>
 					sleepModeON(); //Mode veille.
- 28a:	a6 df       	rcall	.-180    	; 0x1d8 <sleepModeON>
- 28c:	c6 cf       	rjmp	.-116    	; 0x21a <main+0x8>
+ 282:	a6 df       	rcall	.-180    	; 0x1d0 <sleepModeON>
+ 284:	c6 cf       	rjmp	.-116    	; 0x212 <main+0x8>
 
-0000028e <_exit>:
- 28e:	f8 94       	cli
+00000286 <_exit>:
+ 286:	f8 94       	cli
 
-00000290 <__stop_program>:
- 290:	ff cf       	rjmp	.-2      	; 0x290 <__stop_program>
+00000288 <__stop_program>:
+ 288:	ff cf       	rjmp	.-2      	; 0x288 <__stop_program>

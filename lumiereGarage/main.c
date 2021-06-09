@@ -19,14 +19,12 @@ code qui permet d'utiliser un module relais et un interrupteur de porte de type 
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 
-#define RELAY_INIT()			DDRB |= (1<<1) //initialise PB1 comme étant une sortie.
-// #define RELAY_ON()				PORTB |= (1<<1) //active le relai.
-// #define RELAY_OFF()				PORTB &= ~(1<<1) //désactive le relai.
+#define RELAY_INIT()			(DDRB |= (1<<1)) //initialise PB1 comme étant une sortie.
 #define RELAY_SET(a)			(PORTB = (PORTB & ~(1<<1)) | ((a && 1) << 1)) //État du relais.
 #define CAPTEUR_MOVE()			(PINB & (1<<0))
-#define CAPTEUR_PORTE_INIT()	PORTB |= (1<<3) //active la pullup pour l'interrupteur.
+#define CAPTEUR_PORTE_INIT()	(PORTB |= (1<<3)) //active la pullup pour l'interrupteur.
 #define CAPTEUR_PORTE()			(PINB & (1<<3))
-#define DEL_INIT()				DDRC |= (1<<7) //initialise PC7 comme étant une sortie.
+#define DEL_INIT()				(DDRC |= (1<<7)) //initialise PC7 comme étant une sortie.
 #define _TIMER_SEC_CYCLE_CNT	7500/*15000*/ //15'000 * 4ms = 60sec.
 #define _TIMER_MIN_CYCLE_CNT	1 //Nombre de minutes comptées en interruption.
 
@@ -105,7 +103,7 @@ int main(void)
 */
 ISR(TIMER0_COMPA_vect)
 {
-	if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
+	//if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
 	toggleCntSec++;
 	if (toggleCntSec >= _TIMER_SEC_CYCLE_CNT) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
 	{
@@ -175,7 +173,7 @@ void sleepModeON(void)
 	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC); //TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont désactivés pour réduire la consomation pendant la veille.
 	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1); //USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont désactivés pour réduire la consomation pendant la veille.
 	PCICR |= 1; //Active l'interruption externe de type "Pin Change Interrupt". Tout changement sur une des broches PCINT0 à PCINT7 provoquera une interruption.
-	PCMSK0 |= (1<<PCINT3); //Active l'interruption PCINT0 si PCINT3 change d'état.
+	PCMSK0 |= (1<<PCINT0) | (1<<PCINT3); //Active l'interruption PCINT0 (PB0) et PCINT3 (PB3) change d'état afin de sortir du mode veille.
 	sei(); //sei doit être présent afin de pouvoir se sortir du monde veille en utilisant une interruption.
 	sleep_cpu(); //Passage en mode veille.
 	SMCR &= ~(1<<SE); //Au réveil le bit SE doit être remis à 0.
