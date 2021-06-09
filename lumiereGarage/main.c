@@ -25,8 +25,8 @@ code qui permet d'utiliser un module relais et un interrupteur de porte de type 
 #define CAPTEUR_PORTE_INIT()	(PORTB |= (1<<3)) //active la pullup pour l'interrupteur.
 #define CAPTEUR_PORTE()			(PINB & (1<<3))
 #define DEL_INIT()				(DDRC |= (1<<7)) //initialise PC7 comme étant une sortie.
-#define _TIMER_SEC_CYCLE_CNT	7500/*15000*/ //15'000 * 4ms = 60sec.
-#define _TIMER_MIN_CYCLE_CNT	1 //Nombre de minutes comptées en interruption.
+#define _TIMER_SEC_CYCLE_CNT	15000 //15'000 * 4ms = 60sec.
+#define _TIMER_MIN_CYCLE_CNT	10 //Nombre de minutes comptées en interruption.
 
 const uint8_t PLUS_MOINS = 4; //Variable qui indique par bons de combien l'intensitée de la DEL augmente
 
@@ -68,10 +68,18 @@ int main(void)
 			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
 			{
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
+				if (OCR4A >= 200)
+				{
+					OCR4A = 200;
+				}
 			}
 			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
 			{
 				OCR4A -= PLUS_MOINS; //Diminue l'intensité de la DEL.
+				if (OCR4A <= 0)
+				{
+					OCR4A = 0;
+				}
 			}
 		}
 		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
@@ -103,13 +111,12 @@ int main(void)
 */
 ISR(TIMER0_COMPA_vect)
 {
-	//if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
 	toggleCntSec++;
 	if (toggleCntSec >= _TIMER_SEC_CYCLE_CNT) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
 	{
 		toggleCntSec -= _TIMER_SEC_CYCLE_CNT; //Compteur est remis à zéro à chaques minutes.
 		toggleCntMin++;
-		if (toggleCntMin >= _TIMER_MIN_CYCLE_CNT) //Délai est réglé À 15min.
+		if (toggleCntMin >= _TIMER_MIN_CYCLE_CNT) //Délai est réglé À 10min.
 		{
 			toggleCntMin -= _TIMER_MIN_CYCLE_CNT; //Compteur remis à zéro à chaque 5minutes.
 			toggleFlag = 1;

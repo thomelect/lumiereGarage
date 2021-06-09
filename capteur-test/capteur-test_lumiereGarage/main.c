@@ -77,7 +77,6 @@ int main(void)
 		{
 			DEL_CAPTEUR_SET(1); //Le relai est activé.
 			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
-			toggleFlag = 0;
 			toggleCntSec = 0; //Remet le compteur à 0.
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
 		}

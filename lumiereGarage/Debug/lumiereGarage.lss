@@ -23,13 +23,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   9 .debug_frame  00000090  00000000  00000000  00001f60  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000087a4  00000000  00000000  00001ff0  2**0
+ 10 .debug_str    000087a6  00000000  00000000  00001ff0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000056  00000000  00000000  0000a794  2**0
+ 11 .debug_loc    00000056  00000000  00000000  0000a796  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000038  00000000  00000000  0000a7ea  2**0
+ 12 .debug_ranges 00000038  00000000  00000000  0000a7ec  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  0000349f  00000000  00000000  0000a822  2**0
+ 13 .debug_macro  0000349f  00000000  00000000  0000a824  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -177,7 +177,6 @@ ISR(TIMER0_COMPA_vect)
   ee:	2f 93       	push	r18
   f0:	8f 93       	push	r24
   f2:	9f 93       	push	r25
-	//if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
 	toggleCntSec++;
   f4:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
   f8:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
@@ -187,29 +186,29 @@ ISR(TIMER0_COMPA_vect)
 	if (toggleCntSec >= _TIMER_SEC_CYCLE_CNT) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
  106:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
  10a:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
- 10e:	8c 34       	cpi	r24, 0x4C	; 76
- 110:	9d 41       	sbci	r25, 0x1D	; 29
+ 10e:	88 39       	cpi	r24, 0x98	; 152
+ 110:	9a 43       	sbci	r25, 0x3A	; 58
  112:	d8 f0       	brcs	.+54     	; 0x14a <__vector_21+0x66>
 	{
 		toggleCntSec -= _TIMER_SEC_CYCLE_CNT; //Compteur est remis à zéro à chaques minutes.
  114:	80 91 05 01 	lds	r24, 0x0105	; 0x800105 <toggleCntSec>
  118:	90 91 06 01 	lds	r25, 0x0106	; 0x800106 <toggleCntSec+0x1>
- 11c:	8c 54       	subi	r24, 0x4C	; 76
- 11e:	9d 41       	sbci	r25, 0x1D	; 29
+ 11c:	88 59       	subi	r24, 0x98	; 152
+ 11e:	9a 43       	sbci	r25, 0x3A	; 58
  120:	90 93 06 01 	sts	0x0106, r25	; 0x800106 <toggleCntSec+0x1>
  124:	80 93 05 01 	sts	0x0105, r24	; 0x800105 <toggleCntSec>
 		toggleCntMin++;
  128:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
  12c:	8f 5f       	subi	r24, 0xFF	; 255
  12e:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
-		if (toggleCntMin >= _TIMER_MIN_CYCLE_CNT) //Délai est réglé À 15min.
+		if (toggleCntMin >= _TIMER_MIN_CYCLE_CNT) //Délai est réglé À 10min.
  132:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
- 136:	88 23       	and	r24, r24
- 138:	41 f0       	breq	.+16     	; 0x14a <__vector_21+0x66>
+ 136:	8a 30       	cpi	r24, 0x0A	; 10
+ 138:	40 f0       	brcs	.+16     	; 0x14a <__vector_21+0x66>
 		{
 			toggleCntMin -= _TIMER_MIN_CYCLE_CNT; //Compteur remis à zéro à chaque 5minutes.
  13a:	80 91 03 01 	lds	r24, 0x0103	; 0x800103 <toggleCntMin>
- 13e:	81 50       	subi	r24, 0x01	; 1
+ 13e:	8a 50       	subi	r24, 0x0A	; 10
  140:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <toggleCntMin>
 			toggleFlag = 1;
  144:	81 e0       	ldi	r24, 0x01	; 1
