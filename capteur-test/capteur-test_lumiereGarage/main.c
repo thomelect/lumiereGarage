@@ -18,26 +18,27 @@ code qui permet d'utiliser un module relais et un interrupteur de porte de type 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
+#include <stdio.h>
+#include "usart.h"
 
-#define RELAY_INIT()			DDRB |= (1<<1) //initialise PB1 comme étant une sortie.
-// #define RELAY_ON()				PORTB |= (1<<1) //active le relai.
-// #define RELAY_OFF()				PORTB &= ~(1<<1) //désactive le relai.
-#define RELAY_SET(a)			(PORTB = (PORTB & ~(1<<1)) | ((a && 1) << 1)) //État du relais.
-#define CAPTEUR_MOVE()			(PINB & (1<<0))
-#define CAPTEUR_PORTE_INIT()	PORTB |= (1<<3) //active la pullup pour l'interrupteur.
-#define CAPTEUR_PORTE()			(PINB & (1<<3))
-#define DEL_INIT()				DDRC |= (1<<7) //initialise PC7 comme étant une sortie.
+#define DEL_PORTE_INIT()	(DDRC |= (1<<7))
+#define DEL_CAPTEUR_INIT()	(DDRB |= (1<<2))
+#define DEL_CAPTEUR_SET(a)	(PORTB = (PORTB & ~(1<<2)) | ((a && 1) << 2)) //Définition de l'état de la broche de sortie en fonction de la valeur reçue (0 = bas | 1 = haut).
+#define CAPTEUR_INIT()		(PORTB |= (1<<0))
+#define CAPTEUR()			(PINB & (1<<0))
 #define _TIMER_SEC_CYCLE_CNT	7500/*15000*/ //15'000 * 4ms = 60sec.
 #define _TIMER_MIN_CYCLE_CNT	1 //Nombre de minutes comptées en interruption.
 
-const uint8_t PLUS_MOINS = 4; //Variable qui indique par bons de combien l'intensitée de la DEL augmente
+const uint8_t PLUS_MOINS = 4; //variable qui indique par bons de combien l'intensitée de la DEL augmente
 
-uint8_t porteToggle = 0; //Variable qui indique si la porte à été ouverte avant d'avoir été fermée.
-volatile uint16_t toggleCntSec = 0; //Variable permettant au relai de rester actif sur une periode de temps x après la fermeture de la porte.
-volatile uint8_t toggleFlag = 0; //Varible qui vaut 1 lorsque le délai est atteint.
-volatile uint8_t toggleCntMin = 0; //Nombre de minutes
-volatile uint16_t ledCnt = 0; //Variable permettant d'avoir un délai entre chaque changement d'intensité de la DEL.
-volatile uint8_t ledFlag = 0; //Varible qui vaut 1 lorsque le délai est atteint.
+uint8_t porteToggle = 0; //variable qui indique si la porte à été ouverte avant d'avoir été fermée.
+volatile uint16_t toggleCntSec = 0; //variable permettant au relai de rester actif sur une periode de temps x après la fermeture de la porte.
+volatile uint8_t toggleFlag = 0; //varible qui vaut 1 lorsque le délai est atteint.
+volatile uint8_t toggleCntMin = 0; //nombre de minutes
+volatile uint16_t ledCnt = 0; //variable permettant d'avoir un délai entre chaque changement d'intensité de la DEL.
+volatile uint8_t ledFlag = 0; //varible qui vaut 1 lorsque le délai est atteint.
+
+char msg[16];
 
 /**
 *@brief  Fonction d'initialisation des différents I/O et fonctions.
@@ -67,36 +68,34 @@ int main(void)
 		if (ledFlag) //Si le flag est vrai...
 		{
 			ledFlag = 0;
-			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
-			{
+			if (CAPTEUR() && (OCR4A < 200)) //Si la porte est ouverte et que la DEL n'est pas à son intensité maximale (200)...
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
-			}
-			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
-			{
+			if (!CAPTEUR() && (OCR4A > 0)) //Si la porte est fermée et que la DEL n'est pas à son intensité minimale (0)...
 				OCR4A -= PLUS_MOINS; //Diminue l'intensité de la DEL.
-			}
 		}
-		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
+		if (CAPTEUR()) //Si la porte est ouverte...
 		{
-			RELAY_SET(1); //Le relai est activé.
+			DEL_CAPTEUR_SET(1); //Le relai est activé.
 			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
 			toggleCntSec = 0; //Remet le compteur à 0.
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
 		}
 		
-		if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE())) //Si la porte est fermée et qu'aucun mouvement n'est détecté...
+		if (!CAPTEUR()) //Si le capteur est inactif...
 		{
 			if (toggleFlag) //Si le délai est écoulé...
 			{
-				toggleFlag = 0;
-				RELAY_SET(0); //Le relai n'est pas activé.
-				if (porteToggle) //Si la porte à déjà été ouverte,
+				toggleFlag = 0; //remise du flag à 0.
+				DEL_CAPTEUR_SET(0); //Le relai est désactivé.
+				if (porteToggle) //Si la porte à déjà été ouverte...
 				{
 					porteToggle = 0; //État de la porte == fermée
-					sleepModeON(); //Mode veille.
+					//sleepModeON(); //Mode veille.
 				}
 			}
 		}
+		sprintf(msg, "%d\n\r", ((_TIMER_SEC_CYCLE_CNT - toggleCntSec)/250)); //Affiche le temps restant avant que le relai ne soit plus actif.
+		usartSendString(msg);
 	}
 }
 
@@ -106,7 +105,7 @@ int main(void)
 ISR(TIMER0_COMPA_vect)
 {
 	if (porteToggle) //Si la porte à été ouverte et que toggleCntSec qui à été remis à 0 à la fermeture de la porte n'a pas atteint _TIMER_MIN_CYCLE_CNT... **(Ce if empêche le compteur de tourner inutilement)**
-	toggleCntSec++;
+		toggleCntSec++;
 	if (toggleCntSec >= _TIMER_SEC_CYCLE_CNT) //15'000 = 1min 62.5ns * 256 * 250 * 15'000 = 60s.
 	{
 		toggleCntSec -= _TIMER_SEC_CYCLE_CNT; //Compteur est remis à zéro à chaques minutes.
@@ -117,11 +116,10 @@ ISR(TIMER0_COMPA_vect)
 			toggleFlag = 1;
 		}
 	}
-	
 	ledCnt++;
-	if (ledCnt == 5) //Chaques 20ms la DEL augmente ou diminue d'intensité en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
+	if (ledCnt >= 5) //Chaques 20ms la DEL augmente ou diminue d'intensité en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
 	{
-		ledCnt = 0;
+		ledCnt -= 5;
 		ledFlag = 1;
 	}
 }
@@ -129,13 +127,13 @@ ISR(TIMER0_COMPA_vect)
 void miscInit(void)
 {
 	//Initialisation des E/S
-	DEL_INIT();
-	RELAY_INIT();
-	CAPTEUR_PORTE_INIT();
+	DEL_CAPTEUR_INIT();
+	DEL_PORTE_INIT();
 	
 	//Initialisation des Timers.
 	timer0Init();
 	timer4Init();
+	usartInit(1000000, F_CPU);
 }
 
 void timer0Init(void)
