@@ -3,33 +3,33 @@ lumiereGarage.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000000  00800100  00800100  000002fe  2**0
+  0 .data         00000000  00800100  00800100  000002c2  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         0000028a  00000000  00000000  00000074  2**1
+  1 .text         0000024e  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000008  00800100  00800100  000002fe  2**0
+  2 .bss          00000007  00800100  00800100  000002c2  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  000002fe  2**0
+  3 .comment      00000030  00000000  00000000  000002c2  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000330  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000002f4  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000048  00000000  00000000  00000370  2**0
+  5 .debug_aranges 00000040  00000000  00000000  00000334  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000bb4  00000000  00000000  000003b8  2**0
+  6 .debug_info   00000b83  00000000  00000000  00000374  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000a39  00000000  00000000  00000f6c  2**0
+  7 .debug_abbrev 00000a39  00000000  00000000  00000ef7  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   000005ba  00000000  00000000  000019a5  2**0
+  8 .debug_line   0000056e  00000000  00000000  00001930  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  00000090  00000000  00000000  00001f60  2**2
+  9 .debug_frame  00000080  00000000  00000000  00001ea0  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    000087a6  00000000  00000000  00001ff0  2**0
+ 10 .debug_str    00008590  00000000  00000000  00001f20  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000056  00000000  00000000  0000a796  2**0
+ 11 .debug_loc    00000056  00000000  00000000  0000a4b0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000038  00000000  00000000  0000a7ec  2**0
+ 12 .debug_ranges 00000030  00000000  00000000  0000a506  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  0000349f  00000000  00000000  0000a824  2**0
+ 13 .debug_macro  0000345b  00000000  00000000  0000a536  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -134,7 +134,7 @@ Disassembly of section .text:
   b8:	11 e0       	ldi	r17, 0x01	; 1
   ba:	a0 e0       	ldi	r26, 0x00	; 0
   bc:	b1 e0       	ldi	r27, 0x01	; 1
-  be:	ea e8       	ldi	r30, 0x8A	; 138
+  be:	ee e4       	ldi	r30, 0x4E	; 78
   c0:	f2 e0       	ldi	r31, 0x02	; 2
   c2:	02 c0       	rjmp	.+4      	; 0xc8 <__do_copy_data+0x10>
   c4:	05 90       	lpm	r0, Z+
@@ -153,11 +153,11 @@ Disassembly of section .text:
   d6:	1d 92       	st	X+, r1
 
 000000d8 <.do_clear_bss_start>:
-  d8:	a8 30       	cpi	r26, 0x08	; 8
+  d8:	a7 30       	cpi	r26, 0x07	; 7
   da:	b2 07       	cpc	r27, r18
   dc:	e1 f7       	brne	.-8      	; 0xd6 <.do_clear_bss_loop>
-  de:	95 d0       	rcall	.+298    	; 0x20a <main>
-  e0:	d2 c0       	rjmp	.+420    	; 0x286 <_exit>
+  de:	78 d0       	rcall	.+240    	; 0x1d0 <main>
+  e0:	b4 c0       	rjmp	.+360    	; 0x24a <_exit>
 
 000000e2 <__bad_interrupt>:
   e2:	8e cf       	rjmp	.-228    	; 0x0 <__vectors>
@@ -317,159 +317,114 @@ void miscInit(void)
  1cc:	eb cf       	rjmp	.-42     	; 0x1a4 <timer4Init>
  1ce:	08 95       	ret
 
-000001d0 <sleepModeON>:
- 1d0:	83 b7       	in	r24, 0x33	; 51
-{
-	//SMCR: – – – – SM2 SM1 SM0 SE
-	//PRR0: PRTWI – PRTIM0 – PRTIM1 PRSPI – PRADC
-	//PRR1: PRUSB – – PRTIM4 PRTIM3 – – PRUSART1
-	
-	SMCR |= (1<<SM1) | (1<<SE); //SM1 (Sleep Mode #1) fait référence au mode Power-down. Le mode Power-Down est choisi et le bit Sleep Enable est mis à 1.
- 1d2:	85 60       	ori	r24, 0x05	; 5
- 1d4:	83 bf       	out	0x33, r24	; 51
-	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC); //TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont désactivés pour réduire la consomation pendant la veille.
- 1d6:	e4 e6       	ldi	r30, 0x64	; 100
- 1d8:	f0 e0       	ldi	r31, 0x00	; 0
- 1da:	80 81       	ld	r24, Z
- 1dc:	8d 68       	ori	r24, 0x8D	; 141
- 1de:	80 83       	st	Z, r24
-	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1); //USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont désactivés pour réduire la consomation pendant la veille.
- 1e0:	e5 e6       	ldi	r30, 0x65	; 101
- 1e2:	f0 e0       	ldi	r31, 0x00	; 0
- 1e4:	80 81       	ld	r24, Z
- 1e6:	89 69       	ori	r24, 0x99	; 153
- 1e8:	80 83       	st	Z, r24
-	PCICR |= 1; //Active l'interruption externe de type "Pin Change Interrupt". Tout changement sur une des broches PCINT0 à PCINT7 provoquera une interruption.
- 1ea:	e8 e6       	ldi	r30, 0x68	; 104
- 1ec:	f0 e0       	ldi	r31, 0x00	; 0
- 1ee:	80 81       	ld	r24, Z
- 1f0:	81 60       	ori	r24, 0x01	; 1
- 1f2:	80 83       	st	Z, r24
-	PCMSK0 |= (1<<PCINT0) | (1<<PCINT3); //Active l'interruption PCINT0 (PB0) et PCINT3 (PB3) change d'état afin de sortir du mode veille.
- 1f4:	eb e6       	ldi	r30, 0x6B	; 107
- 1f6:	f0 e0       	ldi	r31, 0x00	; 0
- 1f8:	80 81       	ld	r24, Z
- 1fa:	89 60       	ori	r24, 0x09	; 9
- 1fc:	80 83       	st	Z, r24
-	sei(); //sei doit être présent afin de pouvoir se sortir du monde veille en utilisant une interruption.
- 1fe:	78 94       	sei
-	sleep_cpu(); //Passage en mode veille.
- 200:	88 95       	sleep
-	SMCR &= ~(1<<SE); //Au réveil le bit SE doit être remis à 0.
- 202:	83 b7       	in	r24, 0x33	; 51
- 204:	8e 7f       	andi	r24, 0xFE	; 254
- 206:	83 bf       	out	0x33, r24	; 51
- 208:	08 95       	ret
-
-0000020a <main>:
-*/
-void timer4Init(void);
-
-int main(void)
-{
-	miscInit();
- 20a:	dc df       	rcall	.-72     	; 0x1c4 <miscInit>
-			ledFlag = 0;
+000001d0 <main>:
+ 1d0:	f9 df       	rcall	.-14     	; 0x1c4 <miscInit>
+				if (OCR4A >= 200)
+				{
+					OCR4A = 200;
+				}
+			}
+			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
+ 1d2:	ef ec       	ldi	r30, 0xCF	; 207
+ 1d4:	f0 e0       	ldi	r31, 0x00	; 0
 			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
 			{
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
-			}
-			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
- 20c:	cf ec       	ldi	r28, 0xCF	; 207
- 20e:	d0 e0       	ldi	r29, 0x00	; 0
-			}
-		}
-		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
-		{
-			RELAY_SET(1); //Le relai est activé.
-			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
- 210:	11 e0       	ldi	r17, 0x01	; 1
+				if (OCR4A >= 200)
+				{
+					OCR4A = 200;
+ 1d6:	98 ec       	ldi	r25, 0xC8	; 200
 int main(void)
 {
 	miscInit();
 	while (1)
 	{
 		if (ledFlag) //Si le flag est vrai...
- 212:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
- 216:	88 23       	and	r24, r24
- 218:	b1 f0       	breq	.+44     	; 0x246 <main+0x3c>
+ 1d8:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_end>
+ 1dc:	88 23       	and	r24, r24
+ 1de:	f1 f0       	breq	.+60     	; 0x21c <main+0x4c>
 		{
 			ledFlag = 0;
- 21a:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__data_end>
+ 1e0:	10 92 00 01 	sts	0x0100, r1	; 0x800100 <__data_end>
 			if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE()) && (OCR4A < 200)) //Si la porte est ouverte ou qu'un mouvement est détecté et que la DEL n'est pas à son intensité maximale (200)...
- 21e:	1b 9b       	sbis	0x03, 3	; 3
- 220:	02 c0       	rjmp	.+4      	; 0x226 <main+0x1c>
- 222:	18 9b       	sbis	0x03, 0	; 3
- 224:	06 c0       	rjmp	.+12     	; 0x232 <main+0x28>
- 226:	88 81       	ld	r24, Y
- 228:	88 3c       	cpi	r24, 0xC8	; 200
- 22a:	18 f4       	brcc	.+6      	; 0x232 <main+0x28>
+ 1e4:	1b 9b       	sbis	0x03, 3	; 3
+ 1e6:	02 c0       	rjmp	.+4      	; 0x1ec <main+0x1c>
+ 1e8:	18 9b       	sbis	0x03, 0	; 3
+ 1ea:	0a c0       	rjmp	.+20     	; 0x200 <main+0x30>
+ 1ec:	80 81       	ld	r24, Z
+ 1ee:	88 3c       	cpi	r24, 0xC8	; 200
+ 1f0:	38 f4       	brcc	.+14     	; 0x200 <main+0x30>
 			{
 				OCR4A += PLUS_MOINS; //Augmente l'intensité de la DEL.
- 22c:	88 81       	ld	r24, Y
- 22e:	8c 5f       	subi	r24, 0xFC	; 252
- 230:	88 83       	st	Y, r24
+ 1f2:	80 81       	ld	r24, Z
+ 1f4:	8c 5f       	subi	r24, 0xFC	; 252
+ 1f6:	80 83       	st	Z, r24
+				if (OCR4A >= 200)
+ 1f8:	80 81       	ld	r24, Z
+ 1fa:	88 3c       	cpi	r24, 0xC8	; 200
+ 1fc:	08 f0       	brcs	.+2      	; 0x200 <main+0x30>
+				{
+					OCR4A = 200;
+ 1fe:	90 83       	st	Z, r25
+				}
 			}
 			if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE()) && (OCR4A > 0)) //Si la porte est fermée et qu'aucun mouvement n'est détecté et que la DEL n'est pas à son intensité minimale (0)...
- 232:	1b 9b       	sbis	0x03, 3	; 3
- 234:	08 c0       	rjmp	.+16     	; 0x246 <main+0x3c>
- 236:	18 99       	sbic	0x03, 0	; 3
- 238:	06 c0       	rjmp	.+12     	; 0x246 <main+0x3c>
- 23a:	88 81       	ld	r24, Y
- 23c:	88 23       	and	r24, r24
- 23e:	19 f0       	breq	.+6      	; 0x246 <main+0x3c>
+ 200:	1b 9b       	sbis	0x03, 3	; 3
+ 202:	0c c0       	rjmp	.+24     	; 0x21c <main+0x4c>
+ 204:	18 99       	sbic	0x03, 0	; 3
+ 206:	0a c0       	rjmp	.+20     	; 0x21c <main+0x4c>
+ 208:	80 81       	ld	r24, Z
+ 20a:	88 23       	and	r24, r24
+ 20c:	39 f0       	breq	.+14     	; 0x21c <main+0x4c>
 			{
 				OCR4A -= PLUS_MOINS; //Diminue l'intensité de la DEL.
- 240:	88 81       	ld	r24, Y
- 242:	84 50       	subi	r24, 0x04	; 4
- 244:	88 83       	st	Y, r24
+ 20e:	80 81       	ld	r24, Z
+ 210:	84 50       	subi	r24, 0x04	; 4
+ 212:	80 83       	st	Z, r24
+				if (OCR4A <= 0)
+ 214:	80 81       	ld	r24, Z
+ 216:	81 11       	cpse	r24, r1
+ 218:	01 c0       	rjmp	.+2      	; 0x21c <main+0x4c>
+				{
+					OCR4A = 0;
+ 21a:	10 82       	st	Z, r1
+				}
 			}
 		}
 		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
- 246:	1b 9b       	sbis	0x03, 3	; 3
- 248:	02 c0       	rjmp	.+4      	; 0x24e <main+0x44>
- 24a:	18 9b       	sbis	0x03, 0	; 3
- 24c:	09 c0       	rjmp	.+18     	; 0x260 <main+0x56>
+ 21c:	1b 9b       	sbis	0x03, 3	; 3
+ 21e:	02 c0       	rjmp	.+4      	; 0x224 <main+0x54>
+ 220:	18 9b       	sbis	0x03, 0	; 3
+ 222:	07 c0       	rjmp	.+14     	; 0x232 <main+0x62>
 		{
 			RELAY_SET(1); //Le relai est activé.
- 24e:	29 9a       	sbi	0x05, 1	; 5
-			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
- 250:	10 93 07 01 	sts	0x0107, r17	; 0x800107 <porteToggle>
+ 224:	29 9a       	sbi	0x05, 1	; 5
 			toggleCntSec = 0; //Remet le compteur à 0.
- 254:	10 92 06 01 	sts	0x0106, r1	; 0x800106 <toggleCntSec+0x1>
- 258:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <toggleCntSec>
+ 226:	10 92 06 01 	sts	0x0106, r1	; 0x800106 <toggleCntSec+0x1>
+ 22a:	10 92 05 01 	sts	0x0105, r1	; 0x800105 <toggleCntSec>
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
- 25c:	10 92 03 01 	sts	0x0103, r1	; 0x800103 <toggleCntMin>
+ 22e:	10 92 03 01 	sts	0x0103, r1	; 0x800103 <toggleCntMin>
 		}
 		
 		if ((CAPTEUR_PORTE() && !CAPTEUR_MOVE())) //Si la porte est fermée et qu'aucun mouvement n'est détecté...
- 260:	1b 9b       	sbis	0x03, 3	; 3
- 262:	d7 cf       	rjmp	.-82     	; 0x212 <main+0x8>
- 264:	18 99       	sbic	0x03, 0	; 3
- 266:	d5 cf       	rjmp	.-86     	; 0x212 <main+0x8>
+ 232:	1b 9b       	sbis	0x03, 3	; 3
+ 234:	d1 cf       	rjmp	.-94     	; 0x1d8 <main+0x8>
+ 236:	18 99       	sbic	0x03, 0	; 3
+ 238:	cf cf       	rjmp	.-98     	; 0x1d8 <main+0x8>
 		{
 			if (toggleFlag) //Si le délai est écoulé...
- 268:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <toggleFlag>
- 26c:	88 23       	and	r24, r24
- 26e:	89 f2       	breq	.-94     	; 0x212 <main+0x8>
+ 23a:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <toggleFlag>
+ 23e:	88 23       	and	r24, r24
+ 240:	59 f2       	breq	.-106    	; 0x1d8 <main+0x8>
 			{
 				toggleFlag = 0;
- 270:	10 92 04 01 	sts	0x0104, r1	; 0x800104 <toggleFlag>
+ 242:	10 92 04 01 	sts	0x0104, r1	; 0x800104 <toggleFlag>
 				RELAY_SET(0); //Le relai n'est pas activé.
- 274:	29 98       	cbi	0x05, 1	; 5
-				if (porteToggle) //Si la porte à déjà été ouverte,
- 276:	80 91 07 01 	lds	r24, 0x0107	; 0x800107 <porteToggle>
- 27a:	88 23       	and	r24, r24
- 27c:	51 f2       	breq	.-108    	; 0x212 <main+0x8>
-				{
-					porteToggle = 0; //État de la porte == fermée
- 27e:	10 92 07 01 	sts	0x0107, r1	; 0x800107 <porteToggle>
-					sleepModeON(); //Mode veille.
- 282:	a6 df       	rcall	.-180    	; 0x1d0 <sleepModeON>
- 284:	c6 cf       	rjmp	.-116    	; 0x212 <main+0x8>
+ 246:	29 98       	cbi	0x05, 1	; 5
+ 248:	c7 cf       	rjmp	.-114    	; 0x1d8 <main+0x8>
 
-00000286 <_exit>:
- 286:	f8 94       	cli
+0000024a <_exit>:
+ 24a:	f8 94       	cli
 
-00000288 <__stop_program>:
- 288:	ff cf       	rjmp	.-2      	; 0x288 <__stop_program>
+0000024c <__stop_program>:
+ 24c:	ff cf       	rjmp	.-2      	; 0x24c <__stop_program>

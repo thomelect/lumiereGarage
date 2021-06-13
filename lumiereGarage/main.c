@@ -1,23 +1,25 @@
 ﻿/**
 @file		main.c
-@brief		code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumière du garage l'orsque la porte s'ouvre.
-lors de la fermeture de celle-ci, un compte à rebour d'une durée de 2min s'enclanche à la suite duquel le relai redevient inactif.
-Tant et aussi longtemps que la porte est ouverte le relai reste actif lui aussi.
+@brief		Code qui permet d'utiliser un module relais, un interrupteur de porte de type reed switch ainsi qu'un détecteur de mouvements pour allumer automatiquement la lumière du garage lorsque quelqu'un ouvre la porte ou qu'un mouvement est détecté.
+			Lors de la fermeture de celle-ci et en l'absence de mouvement, un compte à rebour d'une durée de 10min s'enclanche à la suite duquel la lumière s'éteindra.
+			Tant et aussi longtemps que la porte est ouverte ou qu'un mouvement est détecté, la lumière le reste elle aussi.
 @author		Thomas Desrosiers
-@version	1.0
-@chip		Atmega32U4
-@device		ArduinoMicro
+@version	2.0
+@chip		ATmega32U4
+@device		Arduino Micro
 @date		2020/2/16
 
-@mainpage	microRelay
+@mainpage	lumiereGarage
 @author		Thomas Desrosiers
 @section	MainSection1 Description
-code qui permet d'utiliser un module relais et un interrupteur de porte de type reed switch pour allumer automatiquement la lumière du garage l'orsque quelqu'un ouvre la porte. lors de la fermeture de celle-ci, un compte à rebpur d'une durée de 2min s'enclanche à la suite duquel la lumière s'éteindra. tant et aussi longtemps que la porte est ouverte la lumière le reste elle aussi.
+			Code qui permet d'utiliser un module relais, un interrupteur de porte de type reed switch ainsi qu'un détecteur de mouvements pour allumer automatiquement la lumière du garage lorsque quelqu'un ouvre la porte ou qu'un mouvement est détecté.
+			Lors de la fermeture de celle-ci et en l'absence de mouvement, un compte à rebour d'une durée de 10min s'enclanche à la suite duquel la lumière s'éteindra.
+			Tant et aussi longtemps que la porte est ouverte ou qu'un mouvement est détecté, la lumière le reste elle aussi.
 */
+
 #define F_CPU 16000000UL
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/sleep.h>
 
 #define RELAY_INIT()			(DDRB |= (1<<1)) //initialise PB1 comme étant une sortie.
 #define RELAY_SET(a)			(PORTB = (PORTB & ~(1<<1)) | ((a && 1) << 1)) //État du relais.
@@ -26,11 +28,10 @@ code qui permet d'utiliser un module relais et un interrupteur de porte de type 
 #define CAPTEUR_PORTE()			(PINB & (1<<3))
 #define DEL_INIT()				(DDRC |= (1<<7)) //initialise PC7 comme étant une sortie.
 #define _TIMER_SEC_CYCLE_CNT	15000 //15'000 * 4ms = 60sec.
-#define _TIMER_MIN_CYCLE_CNT	10 //Nombre de minutes comptées en interruption.
+#define _TIMER_MIN_CYCLE_CNT	10 //Nombre 10 minutes comptées en interruption.
 
 const uint8_t PLUS_MOINS = 4; //Variable qui indique par bons de combien l'intensitée de la DEL augmente
 
-uint8_t porteToggle = 0; //Variable qui indique si la porte à été ouverte avant d'avoir été fermée.
 volatile uint16_t toggleCntSec = 0; //Variable permettant au relai de rester actif sur une periode de temps x après la fermeture de la porte.
 volatile uint8_t toggleFlag = 0; //Varible qui vaut 1 lorsque le délai est atteint.
 volatile uint8_t toggleCntMin = 0; //Nombre de minutes
@@ -41,11 +42,6 @@ volatile uint8_t ledFlag = 0; //Varible qui vaut 1 lorsque le délai est atteint
 *@brief  Fonction d'initialisation des différents I/O et fonctions.
 */
 void miscInit(void);
-
-/**
-*@brief  Fonction qui initialise le mode veille.
-*/
-void sleepModeON(void); //prototype de fonction.
 
 /**
 *@brief  Fonction d'initialisation du timer #0.
@@ -85,7 +81,6 @@ int main(void)
 		if ((!CAPTEUR_PORTE() || CAPTEUR_MOVE())) //Si la porte est ouverte ou qu'un mouvement est détecté...
 		{
 			RELAY_SET(1); //Le relai est activé.
-			porteToggle = 1; //Permet de savoir si la porte à déjà été ouverte depuis le démarage afin de ne pas tomber inutilement en mode veille.
 			toggleCntSec = 0; //Remet le compteur à 0.
 			toggleCntMin = 0; //Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
 		}
@@ -96,11 +91,6 @@ int main(void)
 			{
 				toggleFlag = 0;
 				RELAY_SET(0); //Le relai n'est pas activé.
-				if (porteToggle) //Si la porte à déjà été ouverte,
-				{
-					porteToggle = 0; //État de la porte == fermée
-					sleepModeON(); //Mode veille.
-				}
 			}
 		}
 	}
@@ -168,20 +158,4 @@ void timer4Init(void)
 	TCCR4B |= (1<<CS40) | (1<<CS43);
 	OCR4C = 200-1;
 	OCR4A = 0;
-}
-
-void sleepModeON(void)
-{
-	//SMCR: – – – – SM2 SM1 SM0 SE
-	//PRR0: PRTWI – PRTIM0 – PRTIM1 PRSPI – PRADC
-	//PRR1: PRUSB – – PRTIM4 PRTIM3 – – PRUSART1
-	
-	SMCR |= (1<<SM1) | (1<<SE); //SM1 (Sleep Mode #1) fait référence au mode Power-down. Le mode Power-Down est choisi et le bit Sleep Enable est mis à 1.
-	PRR0 |= (1<<PRTWI)/* | (1<<PRTIM0)*/ | (1<<PRTIM1) | (1<<PRSPI) | (1<<PRADC); //TWI, Timer/Counter0, Timer/Counter1, SPI and ADC sont désactivés pour réduire la consomation pendant la veille.
-	PRR1 |= (1<<PRUSB) | (1<<PRTIM4) | (1<<PRTIM3) | (1<<PRUSART1); //USB clock, Timer/Counter4, Timer/Counter3 and USART1 sont désactivés pour réduire la consomation pendant la veille.
-	PCICR |= 1; //Active l'interruption externe de type "Pin Change Interrupt". Tout changement sur une des broches PCINT0 à PCINT7 provoquera une interruption.
-	PCMSK0 |= (1<<PCINT0) | (1<<PCINT3); //Active l'interruption PCINT0 (PB0) et PCINT3 (PB3) change d'état afin de sortir du mode veille.
-	sei(); //sei doit être présent afin de pouvoir se sortir du monde veille en utilisant une interruption.
-	sleep_cpu(); //Passage en mode veille.
-	SMCR &= ~(1<<SE); //Au réveil le bit SE doit être remis à 0.
 }
