@@ -1,38 +1,63 @@
-# Arborescence générale
+#/****************
+# * ATMEL STUDIO *
+# ****************/
 
-*.one
-*.autosave
-/.vs
-/lampeDimmer_CODE/.vs/
-/lampeDimmer_CODE-USB/.vs/
+## Ignore Atmel Studio temporary files and build results
+# https://www.microchip.com/mplab/avr-support/atmel-studio-7
 
-# GUI
+# Atmel Studio is powered by an older version of Visual Studio,
+# so most of the project and solution files are the same as VS files,
+# only prefixed by an `at`.
 
-lampeDimmer_GUI/debug/
-lampeDimmer_GUI/release/
-*.stash
-*.rc
-lampeDimmer_GUI/*.pro.user
-lampeDimmer_GUI/Makefile
-lampeDimmer_GUI/Makefile.Debug
-lampeDimmer_GUI/Makefile.Release
+#Build Directories
+[Dd]ebug/
+[Rr]elease/
 
-# RÉPERTOIRE !USB & USB
-
-*.atsln
-*.bin
-*.componentinfo.xml
+#Build Results
+*.o
+*.d
 *.eep
 *.elf
 *.hex
-*.lss
 *.map
-*.sym
+*.srec
 
-# CODE - !USB
+*.atsln
 
-lampeDimmer_CODE-USB/Debug/
+#User Specific Files
+*.atsuo
 
-# CODE - USB
 
-lampeDimmer_CODE/Debug/
+#/*********
+# * KICAD *
+# *********/
+
+# For PCBs designed using KiCad: https://www.kicad.org/
+# Format documentation: https://kicad.org/help/file-formats/
+
+# Temporary files
+*.000
+*.bak
+*.bck
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*-backups
+*.kicad_prl
+*.sch-bak
+*~
+_autosave-*
+*.tmp
+*-save.pro
+*-save.kicad_pcb
+fp-info-cache
+
+# Netlist files (exported from Eeschema)
+*.net
+
+# Autorouter files (exported from Pcbnew)
+*.dsn
+*.ses
+
+# Exported BOM files
+*.xml
+*.csv
