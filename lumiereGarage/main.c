@@ -158,13 +158,14 @@ void init_divers(void);
 void init_hardware(void);
 
 /**
- * @brief 				  Éffectue un mécanisme de débouncing pour le signal donné.
- * 
- * @param etat 			  L'état actuel du signal.
- * @param etat_precedent  Pointeur vers l'adresse de l'état précédent du signal.
- * @return				  L'état débouncé du signal.
+ *@brief  Initialisation du timer #0.
  */
-uint8_t debounce(uint8_t etat, uint8_t *etat_precedent);
+void init_timer0(void);
+
+/**
+ *@brief  Initialisation du timer #4.
+ */
+void init_timer4(void);
 
 /**
  * @brief                 Ajuste l'intensité de la DEL en fonction de
@@ -175,6 +176,26 @@ uint8_t debounce(uint8_t etat, uint8_t *etat_precedent);
  */
 void ajuster_intensite_del(t_etat_mouvement etat_mouvement,
 						   t_etat_porte etat_porte);
+
+/**
+ * @brief         Contraint une valeur donnée entre
+ *                une valeur minimale et maximale.
+ * 
+ * @param valeur  La valeur à contraindre.
+ * @param min     La valeur minimale.
+ * @param max     La valeur maximale.
+ * @return        La valeur contrainte.
+ */
+uint8_t contraindre_valeur(uint8_t valeur, uint8_t min, uint8_t max);
+
+/**
+ * @brief 				  Éffectue un mécanisme de débouncing pour le signal donné.
+ * 
+ * @param etat 			  L'état actuel du signal.
+ * @param etat_precedent  Pointeur vers l'adresse de l'état précédent du signal.
+ * @return				  L'état débouncé du signal.
+ */
+uint8_t debounce(uint8_t etat, uint8_t *etat_precedent);
 
 /**
  * @brief                 Gère l'état du relais en fonction de la détection de
@@ -201,27 +222,6 @@ t_etat_mouvement verifier_etat_mouvement(void);
  *          valeur lue par le capteur de position de la porte.
  */
 t_etat_porte verifier_etat_porte(void);
-
-/**
- *@brief  Initialisation du timer #0.
- */
-void init_timer0(void);
-
-/**
- *@brief  Initialisation du timer #4.
- */
-void init_timer4(void);
-
-/**
- * @brief         Contraint une valeur donnée entre
- *                une valeur minimale et maximale.
- * 
- * @param valeur  La valeur à contraindre.
- * @param min     La valeur minimale.
- * @param max     La valeur maximale.
- * @return        La valeur contrainte.
- */
-uint8_t contraindre_valeur(uint8_t valeur, uint8_t min, uint8_t max);
 
 
 /********
@@ -336,6 +336,33 @@ void init_hardware(void)
 	CAPTEUR_PORTE_INIT();
 }
 
+void init_timer0(void)
+{
+
+	// TCCR0A : COM0A1 COM0A0 COM0B1 COM0B0 – – WGM01 WGM00
+	// TCCR0B : FOC0A FOC0B – – WGM02 CS02 CS01 CS00
+	// TIMSK0 : – – – – – OCIE0B OCIE0A TOIE0
+	TCCR0A |= (1 << WGM01);
+	TCCR0B |= (1 << CS02);
+	TIMSK0 |= (1 << OCIE0A);
+	OCR0A = 250 - 1;
+	sei();
+}
+
+void init_timer4(void)
+{
+
+	// TCCR4A: COM4A1 COM4A0 COM4B1 COM4B0 FOC4A FOC4B PWM4A PWM4B
+	// TCCR4B: PWM4X PSR4 DTPS41 DTPS40 CS43 CS42 CS41 CS40
+	// TCCR4C: COM4A1S COM4A0S COM4B1S COMAB0S COM4D1 COM4D0 FOC4D PWM4D
+	// TCCR4D: FPIE4 FPEN4 FPNC4 FPES4 FPAC4 FPF4 WGM41 WGM40
+	// TCCR4E: TLOCK4 ENHC4 OC4OE5 OC4OE4 OC4OE3 OC4OE2 OC4OE1 OC4OE0
+	TCCR4A |= (1 << COM4A1) | (1 << PWM4A);
+	TCCR4B |= (1 << CS40) | (1 << CS43);
+	OCR4C = 200 - 1;
+	OCR4A = 0;
+}
+
 void ajuster_intensite_del(t_etat_mouvement etat_mouvement,
 						   t_etat_porte etat_porte)
 {
@@ -367,76 +394,6 @@ void ajuster_intensite_del(t_etat_mouvement etat_mouvement,
 								   DEL_MIN_INTENSITE,
 								   DEL_MAX_INTENSITE);
 	}
-}
-
-void gestion_etat_relais(t_etat_mouvement etat_mouvement,
-						 t_etat_porte etat_porte)
-{
-
-	// Si la porte est ouverte ou qu'un mouvement est détecté...
-	if (etat_mouvement == MOUVEMENT_DETECTE ||
-		etat_porte == PORTE_OUVERTE)
-	{
-
-        // Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
-		RELAY_SET(1);
-		compteur_secondes = 0;
-		compteur_minutes = 0;
-	}
-
-    // Sinon, si la porte est fermée et qu'aucun mouvement n'est détecté...
-	else if (etat_mouvement == MOUVEMENT_NON_DETECTE &&
-			 etat_porte == PORTE_FERMEE)
-	{
-
-        // Si le délai est écoulé...
-		if (flag_temps_actif_relais)
-		{
-
-			RELAY_SET(0); // Le relai est pas désactivé.
-			flag_temps_actif_relais = 0;
-		}
-	}
-}
-
-t_etat_mouvement verifier_etat_mouvement(void)
-{
-
-	return CAPTEUR_MOUVEMENT_GET();
-}
-
-t_etat_porte verifier_etat_porte(void)
-{
-
-    // Appel de la fonction debounce afin d'éviter les erreurs de lecture.
-	return debounce(CAPTEUR_PORTE_GET(), &etat_precedent_relai);
-}
-
-void init_timer0(void)
-{
-
-	// TCCR0A : COM0A1 COM0A0 COM0B1 COM0B0 – – WGM01 WGM00
-	// TCCR0B : FOC0A FOC0B – – WGM02 CS02 CS01 CS00
-	// TIMSK0 : – – – – – OCIE0B OCIE0A TOIE0
-	TCCR0A |= (1 << WGM01);
-	TCCR0B |= (1 << CS02);
-	TIMSK0 |= (1 << OCIE0A);
-	OCR0A = 250 - 1;
-	sei();
-}
-
-void init_timer4(void)
-{
-
-	// TCCR4A: COM4A1 COM4A0 COM4B1 COM4B0 FOC4A FOC4B PWM4A PWM4B
-	// TCCR4B: PWM4X PSR4 DTPS41 DTPS40 CS43 CS42 CS41 CS40
-	// TCCR4C: COM4A1S COM4A0S COM4B1S COMAB0S COM4D1 COM4D0 FOC4D PWM4D
-	// TCCR4D: FPIE4 FPEN4 FPNC4 FPES4 FPAC4 FPF4 WGM41 WGM40
-	// TCCR4E: TLOCK4 ENHC4 OC4OE5 OC4OE4 OC4OE3 OC4OE2 OC4OE1 OC4OE0
-	TCCR4A |= (1 << COM4A1) | (1 << PWM4A);
-	TCCR4B |= (1 << CS40) | (1 << CS43);
-	OCR4C = 200 - 1;
-	OCR4A = 0;
 }
 
 uint8_t contraindre_valeur(uint8_t valeur, uint8_t min, uint8_t max)
@@ -487,4 +444,47 @@ uint8_t debounce(uint8_t etat, uint8_t *etat_precedent)
 	*etat_precedent = etat;
 
 	return valeur_debounce;
+}
+
+void gestion_etat_relais(t_etat_mouvement etat_mouvement,
+						 t_etat_porte etat_porte)
+{
+
+	// Si la porte est ouverte ou qu'un mouvement est détecté...
+	if (etat_mouvement == MOUVEMENT_DETECTE ||
+		etat_porte == PORTE_OUVERTE)
+	{
+
+        // Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
+		RELAY_SET(1);
+		compteur_secondes = 0;
+		compteur_minutes = 0;
+	}
+
+    // Sinon, si la porte est fermée et qu'aucun mouvement n'est détecté...
+	else if (etat_mouvement == MOUVEMENT_NON_DETECTE &&
+			 etat_porte == PORTE_FERMEE)
+	{
+
+        // Si le délai est écoulé...
+		if (flag_temps_actif_relais)
+		{
+
+			RELAY_SET(0); // Le relai est pas désactivé.
+			flag_temps_actif_relais = 0;
+		}
+	}
+}
+
+t_etat_mouvement verifier_etat_mouvement(void)
+{
+
+	return CAPTEUR_MOUVEMENT_GET();
+}
+
+t_etat_porte verifier_etat_porte(void)
+{
+
+    // Appel de la fonction debounce afin d'éviter les erreurs de lecture.
+	return debounce(CAPTEUR_PORTE_GET(), &etat_precedent_relai);
 }
