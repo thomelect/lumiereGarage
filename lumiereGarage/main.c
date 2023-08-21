@@ -1,21 +1,53 @@
-﻿/**
-@file		main.c
-@brief		Code qui permet d'utiliser un module relais, un interrupteur de porte de type reed switch ainsi qu'un détecteur de mouvements pour allumer automatiquement la lumière du garage lorsque quelqu'un ouvre la porte ou qu'un mouvement est détecté.
-			Lors de la fermeture de celle-ci et en l'absence de mouvement, un compte à rebour d'une durée de 10min s'enclanche à la suite duquel la lumière s'éteindra.
-			Tant et aussi longtemps que la porte est ouverte ou qu'un mouvement est détecté, la lumière le reste elle aussi.
-@author		Thomas Desrosiers
-@version	2.0
-@chip		ATmega32U4
-@device		Arduino Micro
-@date		2020/2/16
+﻿/*************************
+ * DOCUMENTATION FICHIER *
+ *************************/
+/**
+ * @file	   main.c
+ * @author	   Thomas DESROSIERS
+ * @brief      Contrôle d'une lumière de garage à l'aide d'un module 
+ *             relais avec délai d'extinction.
+ * 
+ * @details    Ce fichier contient les définitions des fonctions permettant
+ *             la gestion d'une lumière de garage à l'aide d'un module relais.
+ *             La lumière s'active en réponse à la détection d'un mouvement
+ *             par un capteur et reste allumée pendant un certain délai
+ *             après que la porte du garage ait été fermée.
+ *             Il inclut également les fonctions de détection d'état 
+ *             du capteur de mouvement
+ *             et du capteur de porte pour activer ou désactiver la lumière
+ *             en fonction de ces événements.
+ * @version	   3.0
+ * @date 	   2023/08/20
+ * 
+ * @copyright  Copyright (c) 2023 Thomas DESROSIERS
+ * 
+ */
 
-@mainpage	lumiereGarage
-@author		Thomas Desrosiers
-@section	MainSection1 Description
-			Code qui permet d'utiliser un module relais, un interrupteur de porte de type reed switch ainsi qu'un détecteur de mouvements pour allumer automatiquement la lumière du garage lorsque quelqu'un ouvre la porte ou qu'un mouvement est détecté.
-			Lors de la fermeture de celle-ci et en l'absence de mouvement, un compte à rebour d'une durée de 10min s'enclanche à la suite duquel la lumière s'éteindra.
-			Tant et aussi longtemps que la porte est ouverte ou qu'un mouvement est détecté, la lumière le reste elle aussi.
-*/
+/************************
+ * DOCUMENTATION PROJET *
+ ************************/
+/**
+ * @mainpage   	main.c
+ * @section		MainSection1 Informations du projet
+ * @subsection 	SubSection1 Description du projet
+ * 			   	Contrôle d'une lumière de garage à l'aide d'un module 
+ *              relais avec délai d'extinction.
+ * 
+ * @line       	-----------------------------------------------
+ * 
+ * @subsection  SubSection2 Auteur
+ * 			   	Thomas DESROSIERS
+ * @subsection 	SubSection3 Version
+ * 			   	3.0
+ * @subsection 	SubSection4 Date
+ * 			   	2023/08/20
+ * @subsection 	SubSection5 Documentation supplémentaire
+ *             	Pour plus de détails sur l'implémentation de chaque fonction,\n
+ *             	veuillez vous référer à la documentation dans le code source.\n
+ *             	Vous y trouverez des informations sur les paramètres d'entrée,\n
+ *             	les valeurs de retour et les cas d'utilisation.
+ * 
+ */
 
 #define F_CPU 16000000UL
 #include <avr/io.h>
@@ -26,33 +58,44 @@
  * DEFINES *
  ***********/
 
-#define _TIMER_MIN 	15
-#define _TIMER_SEC	0
+/****************************************************
+ * DÉFINITIONS RELATIVES AU TIMER ET AUX COMPTEURS. *
+ ****************************************************/
 
-// Initialise PB1 comme étant une sortie.
+#define _TIMER_SEC	            0   // Temps en secondes (valeur définie à 0).
+#define _TIMER_MIN 	            15  // Temps en minutes (15 minutes).
+#define _TIMER_CYCLE_TO_SEC_CNT 250 // Nombre de cycles représentant 1 seconde.
+#define _TIMER_SEC_TO_MIN_CNT 	60  // Nombre de secondes représentant 1 minute.
+
+/**************************************************
+ * DÉFINITIONS RELATIVES AUX I/O ET AUX CAPTEURS. *
+ **************************************************/
+
+// Macros pour l'initialisation et le contrôle des relais.
 #define RELAY_INIT_IO()	(DDRB |= (1 << 1))
 #define RELAY_SET(a) 	(PORTB = (PORTB & ~(1 << 1)) | ((a && 1) << 1))
 
+// Macros pour l'initialisation et la lecture du capteur de mouvement.
 // Retourne 1 si un mouvement est détecté, sinon 0.
 #define CAPTEUR_MOUVEMENT_GET() 	(PINB & (1 << 0))
 #define CAPTEUR_MOUVEMENT_INIT()	(PORTB |= (0x01))
 
+// Macros pour l'initialisation et la lecture du capteur de porte.
 // Retourne 1 si la porte est fermée, sinon 0.
 #define CAPTEUR_PORTE_GET() 	(PINB & (1 << 6))
 #define CAPTEUR_PORTE_INIT()	(PORTB |= (1 << 6))
 
 #define DEL_INIT_IO() 			(DDRC |= (1 << 7))
-#define DEL_FADE_INTERVAL 		5 // 5 * 4ms = 20ms.
-#define DEL_INCREMENT_INTENSITE	4 // Variable qui indique par bons de combien l'intensitée de la DEL augmente
+
+/***********************************
+ * DÉFINITIONS RELATIVES À LA DEL. *
+ ***********************************/
+
+// Intervalle entre chaque ajustement d'intensité de la DEL (5 * 4ms = 20ms).
+#define DEL_FADE_INTERVAL 		5   
+#define DEL_INCREMENT_INTENSITE	4
 #define DEL_MAX_INTENSITE 		200
 #define DEL_MIN_INTENSITE 		0
-
-// Définition de nombre de cycle d'interruption qui représente 1sec.
-// 15'000 * 4ms = 60sec.
-#define _TIMER_CYCLE_TO_SEC_CNT 250
-
-// Nombre de minutes comptées en interruption.
-#define _TIMER_SEC_TO_MIN_CNT 	60
 
 
 /********************
@@ -81,14 +124,20 @@ typedef enum
  * VARIABLES *
  *************/
 
+// Compteur de cycles pour 1 seconde (utilisé pour mesurer le temps).
 volatile uint8_t compteur_cycliques_1s = 0;
-volatile uint16_t compteur_secondes = 0;	  // Variable permettant au relai de rester actif sur une periode de temps x après la fermeture de la porte.
-volatile uint8_t compteur_minutes = 0;		  // Nombre de minutes
-volatile uint8_t flag_temps_actif_relais = 0; // Varible qui vaut 1 lorsque le délai est atteint.
-
-volatile uint8_t compteur_delai_intensite_del = 0;	   // Variable permettant d'avoir un délai entre chaque changement d'intensité de la DEL.
+// Compteur de secondes (utilisé pour mesurer le temps et gérer les délais).
+volatile uint8_t compteur_secondes = 0;
+// Compteur de minutes (utilisé pour mesurer le temps et gérer les délais).
+volatile uint8_t compteur_minutes = 0;
+// Indicateur de temps actif du relais (devient 1 lorsque le délai est atteint).
+volatile uint8_t flag_temps_actif_relais = 0;
+// Compteur pour le délai entre chaque ajustement d'intensité de la DEL.
+volatile uint8_t compteur_delai_intensite_del = 0;
+// Indicateur pour indiquer que le délai d'ajustement d'intensité de la DEL est atteint.
 volatile uint8_t flag_delai_intensite_del_atteint = 0; // Varible qui vaut 1 lorsque le délai est atteint.
 
+// État précédent du relais (initialisé à 1 par défaut).
 uint8_t etat_precedent_relai = 1;
 
 
@@ -97,75 +146,80 @@ uint8_t etat_precedent_relai = 1;
  ***************************/
 
 /**
- * @brief 
+ * @brief  Initialise divers éléments du système.
  * 
  */
 void init_divers(void);
 
 /**
- * @brief 
+ * @brief  Initialise les composants matériels.
  * 
  */
 void init_hardware(void);
 
 /**
- * @brief 
+ * @brief 				  Éffectue un mécanisme de débouncing pour le signal donné.
  * 
- * @param etat 
- * @param etat_precedent 
- * @return uint8_t 
+ * @param etat 			  L'état actuel du signal.
+ * @param etat_precedent  Pointeur vers l'adresse de l'état précédent du signal.
+ * @return				  L'état débouncé du signal.
  */
 uint8_t debounce(uint8_t etat, uint8_t *etat_precedent);
 
 /**
- * @brief 
+ * @brief                 Ajuste l'intensité de la DEL en fonction de
+ *                        la détection de mouvements et de la position de la porte.
  * 
- * @param etat_mouvement 
- * @param etat_porte 
+ * @param etat_mouvement  Valeur lue par le capteur de mouvement.
+ * @param etat_porte      Valeur lue par le capteur position de la porte.
  */
 void ajuster_intensite_del(t_etat_mouvement etat_mouvement,
 						   t_etat_porte etat_porte);
 
 /**
- * @brief 
+ * @brief                 Gère l'état du relais en fonction de la détection de
+ *                        mouvements et de la position de la porte.
  * 
- * @param etat_mouvement 
- * @param etat_porte 
+ * @param etat_mouvement  Valeur lue par le capteur de mouvement.
+ * @param etat_porte      Valeur lue par le capteur de position de la porte.
  */
 void gestion_etat_relais(t_etat_mouvement etat_mouvement,
 						 t_etat_porte etat_porte);
 
 /**
- * @brief 
+ * @brief   Vérifie et renvoie l'état du mouvement.
  * 
- * @return t_etat_mouvement 
+ * @return  Valeur de t_etat_mouvement selon la 
+ *          valeur lue par le capteur de mouvement.
  */
 t_etat_mouvement verifier_etat_mouvement(void);
 
 /**
- * @brief 
+ * @brief   Vérifie et renvoie l'état de la porte.
  * 
- * @return t_etat_porte 
+ * @return  Valeur de t_etat_porte selon la 
+ *          valeur lue par le capteur de position de la porte.
  */
 t_etat_porte verifier_etat_porte(void);
 
 /**
- *@brief  Fonction d'initialisation du timer #0.
+ *@brief  Initialisation du timer #0.
  */
 void init_timer0(void);
 
 /**
- *@brief  Fonction d'initialisation du timer #4.
+ *@brief  Initialisation du timer #4.
  */
 void init_timer4(void);
 
 /**
- * @brief 
+ * @brief         Contraint une valeur donnée entre
+ *                une valeur minimale et maximale.
  * 
- * @param valeur 
- * @param min 
- * @param max 
- * @return uint8_t 
+ * @param valeur  La valeur à contraindre.
+ * @param min     La valeur minimale.
+ * @param max     La valeur maximale.
+ * @return        La valeur contrainte.
  */
 uint8_t contraindre_valeur(uint8_t valeur, uint8_t min, uint8_t max);
 
@@ -185,7 +239,8 @@ int main(void)
 		t_etat_mouvement etat_mouvement = verifier_etat_mouvement();
 		t_etat_porte etat_porte = verifier_etat_porte();
 
-		if (flag_delai_intensite_del_atteint) // Si le flag est vrai...
+        // Si le délai est atteint...
+		if (flag_delai_intensite_del_atteint)
 		{
 
 			flag_delai_intensite_del_atteint = 0;
@@ -202,17 +257,17 @@ int main(void)
  *****************/
 
 /**
- *@brief Interruption qui génère les intervales de temps pour fade le DEL et compter le délai avant que la relai ne soit plus actif.
+ *@brief  Interruption qui génère les intervales de temps pour
+          fade le DEL et compter le délai avant que la relai ne soit plus actif.
  */
 ISR(TIMER0_COMPA_vect)
 {
 
 	compteur_cycliques_1s++;
-	// compteur_secondes_temps_actif_relais++;
 
 	if (compteur_secondes >= _TIMER_SEC)
 	{
-		// flag_temps_actif_relais = 1;
+
 		//  Si le nombre de minutes voulu est lui aussi atteint...
 		if (compteur_minutes >= _TIMER_MIN)
 		{
@@ -237,19 +292,19 @@ ISR(TIMER0_COMPA_vect)
 		// Si 60 secondes (1 minute) s'est écoulé...
 		if (compteur_secondes >= _TIMER_SEC_TO_MIN_CNT)
 		{
-			// flag_temps_actif_relais = 1;
+
 			//  Compteur remis à zéro à chaque minute.
 			compteur_secondes -= _TIMER_SEC_TO_MIN_CNT;
 
 			// Incrément du compteur de minutes.
 			compteur_minutes++;
 		}
-
-		// Si le nombre de secondes voulu est atteint...
 	}
 
 	compteur_delai_intensite_del++;
-	if (compteur_delai_intensite_del >= DEL_FADE_INTERVAL) // Chaques 20ms la DEL augmente ou diminue d'intensité en faisant des bons de 4 pour un maximum de 200 (((0.020 * 200) / 4) = 1sec).
+
+    // Chaques DEL_FADE_INTERVAL (20ms) la DEL augmente ou diminue d'intensité.
+	if (compteur_delai_intensite_del >= DEL_FADE_INTERVAL)
 	{
 
 		compteur_delai_intensite_del -= DEL_FADE_INTERVAL;
@@ -323,29 +378,25 @@ void gestion_etat_relais(t_etat_mouvement etat_mouvement,
 		etat_porte == PORTE_OUVERTE)
 	{
 
-		RELAY_SET(1);		   // Le relai est activé.
-		compteur_secondes = 0; // Remet le compteur à 0.
-		compteur_minutes = 0;  // Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
+        // Remet le compteur des minutes à 0 chaques fois que la porte est ouverte.
+		RELAY_SET(1);
+		compteur_secondes = 0;
+		compteur_minutes = 0;
 	}
 
+    // Sinon, si la porte est fermée et qu'aucun mouvement n'est détecté...
 	else if (etat_mouvement == MOUVEMENT_NON_DETECTE &&
-			 etat_porte == PORTE_FERMEE) // Si la porte est fermée et qu'aucun mouvement n'est détecté...
+			 etat_porte == PORTE_FERMEE)
 	{
 
-		if (flag_temps_actif_relais) // Si le délai est écoulé...
+        // Si le délai est écoulé...
+		if (flag_temps_actif_relais)
 		{
 
+			RELAY_SET(0); // Le relai est pas désactivé.
 			flag_temps_actif_relais = 0;
-			RELAY_SET(0); // Le relai n'est pas activé.
 		}
 	}
-}
-
-int verifier_activation_lumiere(void)
-{
-
-	// Retourne 1 si la porte est ouverte ou si un mouvement est détecté.
-	return (!debounce(CAPTEUR_PORTE_GET(), &etat_precedent_relai) || CAPTEUR_MOUVEMENT_GET());
 }
 
 t_etat_mouvement verifier_etat_mouvement(void)
@@ -357,6 +408,7 @@ t_etat_mouvement verifier_etat_mouvement(void)
 t_etat_porte verifier_etat_porte(void)
 {
 
+    // Appel de la fonction debounce afin d'éviter les erreurs de lecture.
 	return debounce(CAPTEUR_PORTE_GET(), &etat_precedent_relai);
 }
 
@@ -366,9 +418,9 @@ void init_timer0(void)
 	// TCCR0A : COM0A1 COM0A0 COM0B1 COM0B0 – – WGM01 WGM00
 	// TCCR0B : FOC0A FOC0B – – WGM02 CS02 CS01 CS00
 	// TIMSK0 : – – – – – OCIE0B OCIE0A TOIE0
-	TCCR0A |= (1 << WGM01);	 // CTC
-	TCCR0B |= (1 << CS02);	 // Prescaler /256
-	TIMSK0 |= (1 << OCIE0A); //
+	TCCR0A |= (1 << WGM01);
+	TCCR0B |= (1 << CS02);
+	TIMSK0 |= (1 << OCIE0A);
 	OCR0A = 250 - 1;
 	sei();
 }
@@ -392,16 +444,23 @@ uint8_t contraindre_valeur(uint8_t valeur, uint8_t min, uint8_t max)
 
 	uint8_t resultat = 0;
 
+    // Si la valeur est inférieur au seuil minimum...
 	if (valeur <= min)
 	{
 
+        // Valeur retournée limitée au seuil minimum.
 		resultat = min;
 	}
+
+    // Sinon, si la valeur est suppérieure au seuil maximum...
 	else if (valeur >= max)
 	{
 
+        // Valeur retournée limitée au seuil maximum.
 		resultat = max;
 	}
+
+    // Sinon (la valeur est valide)...
 	else
 	{
 
@@ -416,8 +475,15 @@ uint8_t debounce(uint8_t etat, uint8_t *etat_precedent)
 
 	uint8_t valeur_debounce = 0;
 
-	if (etat && etat)
-		valeur_debounce = 1;
+    // Si la valeur actuellement lue est la même que celle précédemment lue...
+	if (etat && (*etat_precedent))
+	{
+        
+        // La valeur retourné par la fonction sera 1.
+        valeur_debounce = 1;
+    }
+
+    // etat_precedent prend la valeur de l'état actuel.
 	*etat_precedent = etat;
 
 	return valeur_debounce;
