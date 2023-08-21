@@ -146,10 +146,10 @@ limitations under the License.
 <i><strong>👉 GitHub</strong></i>
 <ul>
 <li>
-<a href="https://github.com/thomelect" style="vertical-align:middle"> - thomelect</a>
+<a href="https://github.com/thomelect" style="vertical-align:middle">thomelect</a>
 </li>
 <li>
-<a href="https://github.com/thomelect/lumiereGarage" style="vertical-align:middle"> - Projet lumiereGarage</a>
+<a href="https://github.com/thomelect/lumiereGarage" style="vertical-align:middle">Projet lumiereGarage</a>
 </li>
 </ul>
 </ul>
@@ -167,10 +167,10 @@ limitations under the License.
 <ul>
 <li>
 <a href="https://docs.arduino.cc/static/59994142e99a42eea5731bf61b08922b/A000053-full-pinout.pdf"
-style="vertical-align:middle"> Arduino Micro PinOut (Le PinOut est le même pour tout les Arduino).</a>
+style="vertical-align:middle">Arduino Micro PinOut (Le PinOut est le même pour tout les Arduino).</a>
 </li>
 <li>
-<a href="http://ww1.microchip.com/downloads/en/devicedoc/50002721a.pdf" style="vertical-align:middle"> PICkit4
+<a href="http://ww1.microchip.com/downloads/en/devicedoc/50002721a.pdf" style="vertical-align:middle">PICkit4
 Quick Start Guide.</a>
 </li>
 </ul>
