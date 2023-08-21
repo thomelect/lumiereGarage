@@ -22,6 +22,8 @@
 *.map
 *.srec
 
+*.atsln
+
 #User Specific Files
 *.atsuo
 
