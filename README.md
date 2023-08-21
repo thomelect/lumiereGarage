@@ -186,3 +186,5 @@ Quick Start Guide.</a>
 ## Modèle README
 
 <a href="https://github.com/othneildrew/Best-README-Template/blob/master/BLANK_README.md">`Template README`</a>
+
+<p align="right">(<a href="#top">Haut de la page</a>)</p>
